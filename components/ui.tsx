@@ -6,23 +6,23 @@ export function cx(...parts: (string | false | null | undefined)[]): string {
 }
 
 /**
- * One white pill anchors every primary action on the site; everything else is a
- * hairline ghost. Keeping the set this small is what makes the hierarchy read.
+ * Controls are pills, matching the Prepskora site. One solid blue carries the
+ * primary action on any given view; everything else steps down to a blue tint,
+ * an outline, or plain text.
  */
 const VARIANTS = {
-  primary:
-    "bg-ink text-canvas hover:bg-white disabled:bg-stone disabled:text-ash",
-  secondary:
-    "border border-hairline bg-elevated text-ink hover:border-hairline-strong hover:bg-card disabled:text-ash",
-  ghost: "text-mute hover:bg-elevated hover:text-ink disabled:text-stone",
-  danger:
-    "border border-accent-red/30 bg-accent-red-soft text-accent-red hover:border-accent-red/60",
+  primary: "bg-brand text-white hover:bg-brand-deep disabled:bg-ghost",
+  soft: "bg-brand-soft text-brand-ink hover:bg-brand-line disabled:text-faint",
+  outline:
+    "border border-line-strong bg-canvas text-ink hover:border-ghost hover:bg-surface disabled:text-faint",
+  ghost: "text-muted hover:bg-surface hover:text-ink disabled:text-ghost",
+  danger: "border border-bad-line bg-bad-soft text-bad hover:bg-bad-line/40",
 } as const;
 
 const SIZES = {
-  sm: "h-8 px-3 text-[13px] gap-1.5",
-  md: "h-9 px-4 text-sm gap-2",
-  lg: "h-11 px-5 text-[15px] gap-2",
+  sm: "h-9 px-4 text-sm gap-1.5",
+  md: "h-11 px-5 text-[15px] gap-2",
+  lg: "h-13 px-7 text-[17px] gap-2.5",
 } as const;
 
 type ButtonStyle = {
@@ -32,7 +32,7 @@ type ButtonStyle = {
 
 function buttonClass({ variant = "primary", size = "md" }: ButtonStyle, extra?: string) {
   return cx(
-    "inline-flex select-none items-center justify-center rounded-md font-medium",
+    "inline-flex shrink-0 select-none items-center justify-center rounded-full font-medium",
     "transition-colors duration-150 disabled:cursor-not-allowed",
     VARIANTS[variant],
     SIZES[size],
@@ -68,28 +68,31 @@ export function AnchorButton({
 }
 
 const ACCENTS = {
-  green: "border-accent-green/25 bg-accent-green-soft text-accent-green",
-  blue: "border-accent-blue/25 bg-accent-blue-soft text-accent-blue",
-  red: "border-accent-red/25 bg-accent-red-soft text-accent-red",
-  yellow: "border-accent-yellow/25 bg-accent-yellow-soft text-accent-yellow",
-  purple: "border-accent-purple/25 bg-accent-purple-soft text-accent-purple",
-  neutral: "border-hairline bg-elevated text-mute",
+  brand: "bg-brand-soft text-brand-ink",
+  good: "bg-good-soft text-good",
+  warn: "bg-warn-soft text-warn",
+  bad: "bg-bad-soft text-bad",
+  indigo: "bg-indigo-soft text-indigo",
+  clay: "bg-clay-soft text-clay",
+  neutral: "bg-surface-2 text-muted",
 } as const;
+
+export type Accent = keyof typeof ACCENTS;
 
 export function Badge({
   accent = "neutral",
   className,
   children,
 }: {
-  accent?: keyof typeof ACCENTS;
+  accent?: Accent;
   className?: string;
   children: ReactNode;
 }) {
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5",
-        "text-[11px] font-medium tracking-tight whitespace-nowrap",
+        "inline-flex items-center gap-1.5 rounded-full px-3 py-1",
+        "text-[13px] font-medium whitespace-nowrap",
         ACCENTS[accent],
         className,
       )}
@@ -107,15 +110,21 @@ export function Card({
   children: ReactNode;
 }) {
   return (
-    <div
-      className={cx(
-        "rounded-xl border border-hairline bg-card",
-        className,
-      )}
-    >
+    <div className={cx("rounded-2xl border border-line bg-canvas", className)}>
       {children}
     </div>
   );
+}
+
+/** A tinted panel, the way the reference site separates one section from the next. */
+export function Panel({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return <div className={cx("rounded-3xl bg-surface", className)}>{children}</div>;
 }
 
 export function Field({
@@ -133,37 +142,37 @@ export function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-baseline justify-between gap-3">
-        <span className="text-[13px] font-medium text-charcoal">{label}</span>
-        {optional && <span className="text-[11px] text-stone">Optional</span>}
+      <span className="mb-2 flex items-baseline justify-between gap-3">
+        <span className="text-[15px] font-medium text-ink">{label}</span>
+        {optional && <span className="text-[13px] text-faint">Optional</span>}
       </span>
       {children}
       {error ? (
-        <span className="mt-1.5 block text-[12px] text-accent-red">{error}</span>
+        <span className="mt-2 block text-[13px] text-bad">{error}</span>
       ) : hint ? (
-        <span className="mt-1.5 block text-[12px] text-ash">{hint}</span>
+        <span className="mt-2 block text-[13px] leading-5 text-muted">{hint}</span>
       ) : null}
     </label>
   );
 }
 
 const CONTROL =
-  "w-full rounded-md border border-hairline bg-surface px-3 text-sm text-ink " +
-  "placeholder:text-stone transition-colors hover:border-hairline-strong " +
-  "focus:border-accent-green/50 focus:outline-none disabled:text-ash";
+  "w-full rounded-xl border border-line-strong bg-canvas px-4 text-[15px] text-ink " +
+  "placeholder:text-faint transition-colors hover:border-ghost " +
+  "focus:border-brand focus:outline-none disabled:bg-surface disabled:text-faint";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
-  return <input className={cx(CONTROL, "h-9", className)} {...props} />;
+  return <input className={cx(CONTROL, "h-11", className)} {...props} />;
 }
 
 export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
   return (
-    <textarea className={cx(CONTROL, "resize-y py-2.5 leading-6", className)} {...props} />
+    <textarea className={cx(CONTROL, "resize-y py-3 leading-7", className)} {...props} />
   );
 }
 
 export function Select({ className, ...props }: ComponentProps<"select">) {
-  return <select className={cx(CONTROL, "h-9 pr-8", className)} {...props} />;
+  return <select className={cx(CONTROL, "h-11 pr-10", className)} {...props} />;
 }
 
 /** A form-level message. Errors are announced; successes are not. */
@@ -175,15 +184,15 @@ export function Notice({
   children: ReactNode;
 }) {
   const tones = {
-    error: "border-accent-red/25 bg-accent-red-soft text-accent-red",
-    success: "border-accent-green/25 bg-accent-green-soft text-accent-green",
-    info: "border-hairline bg-elevated text-mute",
+    error: "bg-bad-soft text-bad",
+    success: "bg-good-soft text-good",
+    info: "bg-surface-2 text-muted",
   } as const;
 
   return (
     <p
       role={tone === "error" ? "alert" : undefined}
-      className={cx("rounded-md border px-3 py-2.5 text-[13px]", tones[tone])}
+      className={cx("rounded-xl px-4 py-3 text-[14px] leading-6", tones[tone])}
     >
       {children}
     </p>
@@ -192,19 +201,24 @@ export function Notice({
 
 export function Section({
   title,
+  lede,
   action,
   children,
   className,
 }: {
   title: string;
+  lede?: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <section className={cx("py-12 sm:py-16", className)}>
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <h2 className="text-lg font-medium tracking-tight text-ink">{title}</h2>
+    <section className={cx("py-14 sm:py-20", className)}>
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 className="display-sm text-[26px] sm:text-[30px]">{title}</h2>
+          {lede && <p className="mt-2 max-w-xl text-[15px] leading-7 text-muted">{lede}</p>}
+        </div>
         {action}
       </div>
       {children}
@@ -222,12 +236,12 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-dashed border-hairline px-6 py-14 text-center">
-      <p className="text-sm font-medium text-ink">{title}</p>
+    <div className="rounded-3xl bg-surface px-6 py-16 text-center">
+      <p className="text-[18px] font-medium text-ink">{title}</p>
       {children && (
-        <p className="mx-auto mt-1.5 max-w-sm text-[13px] leading-6 text-ash">{children}</p>
+        <p className="mx-auto mt-2 max-w-md text-[15px] leading-7 text-muted">{children}</p>
       )}
-      {action && <div className="mt-5 flex justify-center">{action}</div>}
+      {action && <div className="mt-6 flex justify-center">{action}</div>}
     </div>
   );
 }

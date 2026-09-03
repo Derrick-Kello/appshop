@@ -9,15 +9,20 @@ import { cx } from "./ui";
 type Props = {
   className?: string;
   placeholder?: string;
+  size?: "md" | "lg";
   autoFocus?: boolean;
 };
 
-const CONTROL =
-  "h-9 w-full rounded-md border border-hairline bg-surface pl-9 pr-3 text-sm text-ink " +
-  "placeholder:text-stone transition-colors hover:border-hairline-strong " +
-  "focus:border-accent-green/50 focus:outline-none";
+function control(size: "md" | "lg") {
+  return cx(
+    "w-full rounded-full border border-line-strong bg-canvas text-ink",
+    "placeholder:text-faint transition-colors hover:border-ghost",
+    "focus:border-brand focus:outline-none",
+    size === "lg" ? "h-13 pl-12 pr-5 text-[16px]" : "h-10 pl-10 pr-4 text-[15px]",
+  );
+}
 
-function Field({ className, placeholder = "Search apps", autoFocus }: Props) {
+function Field({ className, placeholder = "Search apps", size = "md", autoFocus }: Props) {
   const router = useRouter();
   const params = useSearchParams();
   const [value, setValue] = useState(params.get("q") ?? "");
@@ -32,7 +37,12 @@ function Field({ className, placeholder = "Search apps", autoFocus }: Props) {
         router.push(query ? `/apps?q=${encodeURIComponent(query)}` : "/apps");
       }}
     >
-      <SearchIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-stone" />
+      <SearchIcon
+        className={cx(
+          "pointer-events-none absolute top-1/2 -translate-y-1/2 text-faint",
+          size === "lg" ? "left-4.5 h-5 w-5" : "left-3.5 h-4 w-4",
+        )}
+      />
       <input
         type="search"
         name="q"
@@ -41,7 +51,7 @@ function Field({ className, placeholder = "Search apps", autoFocus }: Props) {
         onChange={(event) => setValue(event.target.value)}
         placeholder={placeholder}
         aria-label="Search apps"
-        className={CONTROL}
+        className={control(size)}
       />
     </form>
   );
@@ -57,8 +67,13 @@ export function SearchField(props: Props) {
     <Suspense
       fallback={
         <div className={cx("relative", props.className)}>
-          <SearchIcon className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-stone" />
-          <div className={CONTROL} aria-hidden />
+          <SearchIcon
+            className={cx(
+              "pointer-events-none absolute top-1/2 -translate-y-1/2 text-faint",
+              props.size === "lg" ? "left-4.5 h-5 w-5" : "left-3.5 h-4 w-4",
+            )}
+          />
+          <div className={control(props.size ?? "md")} aria-hidden />
         </div>
       }
     >

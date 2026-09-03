@@ -21,12 +21,12 @@ export function DownloadPanel({
 
   if (!release) {
     return (
-      <Card className="p-5">
-        <div className="flex items-start gap-2.5 text-mute">
-          <WarnIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent-yellow" />
-          <div className="text-[13px] leading-6">
+      <Card className="p-6">
+        <div className="flex items-start gap-3">
+          <WarnIcon className="mt-0.5 h-5 w-5 shrink-0 text-warn" />
+          <div className="text-[15px] leading-7">
             <p className="font-medium text-ink">No published release yet</p>
-            <p className="mt-1 text-ash">
+            <p className="mt-1 text-muted">
               This repository has no GitHub release with a downloadable build.
               Once its publisher tags one, the download appears here on its own.
             </p>
@@ -36,8 +36,8 @@ export function DownloadPanel({
           href={repoUrl}
           target="_blank"
           rel="noreferrer"
-          variant="secondary"
-          className="mt-4 w-full"
+          variant="outline"
+          className="mt-5 w-full"
         >
           <GitHubIcon />
           View repository
@@ -50,13 +50,13 @@ export function DownloadPanel({
 
   return (
     <Card className="overflow-hidden">
-      <div className="border-b border-hairline p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <span className="flex items-center gap-2 text-[13px] text-mute">
-            <AppleIcon className="h-3.5 w-3.5" />
+      <div className="p-6">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <span className="flex items-center gap-2 text-[15px] text-muted">
+            <AppleIcon className="h-4 w-4" />
             macOS
           </span>
-          <Badge accent={release.prerelease ? "yellow" : "green"}>
+          <Badge accent={release.prerelease ? "warn" : "good"}>
             {release.prerelease ? "Pre-release" : "Latest"} · {release.tag}
           </Badge>
         </div>
@@ -64,10 +64,10 @@ export function DownloadPanel({
         {primary ? (
           <>
             <AnchorButton href={`/api/download/${app.slug}`} size="lg" className="w-full">
-              <DownloadIcon />
+              <DownloadIcon className="h-5 w-5" />
               Download for Mac
             </AnchorButton>
-            <p className="mt-2.5 text-center text-[12px] text-stone">
+            <p className="mt-3 text-center text-[14px] text-muted">
               {archLabel(primary.arch)} · {primary.kind.toUpperCase()} ·{" "}
               {formatBytes(primary.size)}
             </p>
@@ -78,14 +78,14 @@ export function DownloadPanel({
               href={release.url}
               target="_blank"
               rel="noreferrer"
-              variant="secondary"
+              variant="outline"
               size="lg"
               className="w-full"
             >
               <GitHubIcon />
               Open the release
             </AnchorButton>
-            <p className="mt-2.5 text-center text-[12px] text-stone">
+            <p className="mt-3 text-center text-[14px] text-muted">
               This release has no .dmg, .pkg or .zip attached.
             </p>
           </>
@@ -93,24 +93,20 @@ export function DownloadPanel({
       </div>
 
       {alternates.length > 0 && (
-        <div className="border-b border-hairline p-5">
-          <h3 className="mb-2.5 text-[12px] font-medium tracking-wide text-ash uppercase">
-            Other builds
-          </h3>
+        <div className="border-t border-line p-6">
+          <h3 className="mb-3 text-[14px] font-medium text-ink">Other builds</h3>
           <ul className="space-y-1">
             {alternates.map((build) => (
               <li key={build.url}>
                 <a
                   href={build.url}
                   className={cx(
-                    "flex items-center justify-between gap-3 rounded-md px-2.5 py-2",
-                    "text-[13px] text-mute transition-colors hover:bg-elevated hover:text-ink",
+                    "flex items-center justify-between gap-3 rounded-lg px-3 py-2.5",
+                    "text-[14px] text-body transition-colors hover:bg-surface hover:text-ink",
                   )}
                 >
                   <span className="truncate">{build.name}</span>
-                  <span className="shrink-0 text-[12px] text-stone">
-                    {formatBytes(build.size)}
-                  </span>
+                  <span className="shrink-0 text-muted">{formatBytes(build.size)}</span>
                 </a>
               </li>
             ))}
@@ -118,10 +114,8 @@ export function DownloadPanel({
         </div>
       )}
 
-      <dl className="divide-y divide-hairline text-[13px]">
-        <Row label="Version">
-          <span className="font-mono text-charcoal">{release.tag}</span>
-        </Row>
+      <dl className="border-t border-line text-[15px]">
+        <Row label="Version">{release.tag}</Row>
         <Row label="Released">{formatDate(release.publishedAt)}</Row>
         {app.requirements && <Row label="Requires">{app.requirements}</Row>}
         <Row label="Source">
@@ -129,7 +123,7 @@ export function DownloadPanel({
             href={repoUrl}
             target="_blank"
             rel="noreferrer"
-            className="text-charcoal underline decoration-hairline-strong underline-offset-2 hover:decoration-accent-green"
+            className="text-brand transition-colors hover:text-brand-deep"
           >
             {app.repoOwner}/{app.repoName}
           </a>
@@ -141,9 +135,9 @@ export function DownloadPanel({
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 px-5 py-2.5">
-      <dt className="text-ash">{label}</dt>
-      <dd className="truncate text-right text-mute">{children}</dd>
+    <div className="flex items-center justify-between gap-4 px-6 py-3 not-last:border-b not-last:border-line">
+      <dt className="text-muted">{label}</dt>
+      <dd className="truncate text-right text-ink">{children}</dd>
     </div>
   );
 }
@@ -159,10 +153,10 @@ export function ReleaseHistory({ releases }: { releases: Release[] }) {
             href={release.url}
             target="_blank"
             rel="noreferrer"
-            className="flex items-baseline justify-between gap-3 rounded-md px-2.5 py-2 text-[13px] transition-colors hover:bg-elevated"
+            className="flex items-baseline justify-between gap-3 rounded-lg px-3 py-2.5 text-[15px] transition-colors hover:bg-surface"
           >
-            <span className="font-mono text-charcoal">{release.tag}</span>
-            <span className="text-[12px] text-stone">{formatDate(release.publishedAt)}</span>
+            <span className="text-ink">{release.tag}</span>
+            <span className="text-[14px] text-muted">{formatDate(release.publishedAt)}</span>
           </a>
         </li>
       ))}

@@ -2,7 +2,7 @@ export type Category = {
   slug: string;
   name: string;
   blurb: string;
-  accent: "green" | "blue" | "red" | "yellow" | "purple";
+  accent: "brand" | "good" | "warn" | "bad" | "indigo" | "clay";
 };
 
 export const CATEGORIES: Category[] = [
@@ -10,37 +10,37 @@ export const CATEGORIES: Category[] = [
     slug: "developer-tools",
     name: "Developer Tools",
     blurb: "Editors, terminals, local servers and the things that run your code.",
-    accent: "green",
+    accent: "good",
   },
   {
     slug: "productivity",
     name: "Productivity",
     blurb: "Launchers, window managers, clipboard history, note-taking.",
-    accent: "blue",
+    accent: "brand",
   },
   {
     slug: "utilities",
     name: "Utilities",
     blurb: "Menu bar tools, cleaners, converters, small sharp things.",
-    accent: "yellow",
+    accent: "warn",
   },
   {
     slug: "design",
     name: "Design",
     blurb: "Colour, type, screenshots, icons and asset pipelines.",
-    accent: "purple",
+    accent: "indigo",
   },
   {
     slug: "media",
     name: "Media",
     blurb: "Audio, video, images, and the players and encoders around them.",
-    accent: "red",
+    accent: "bad",
   },
   {
     slug: "system",
     name: "System",
     blurb: "Monitors, disk tools, network inspectors, hardware readouts.",
-    accent: "blue",
+    accent: "clay",
   },
 ];
 

@@ -22,41 +22,45 @@ export default async function CategoriesPage() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 sm:py-16">
-      <header className="mb-10">
-        <h1 className="text-2xl font-medium tracking-tight text-ink">Categories</h1>
-        <p className="mt-1.5 max-w-xl text-[13px] leading-6 text-ash">
-          Six shelves, chosen to match how people actually look for a Mac app
-          rather than how app stores like to file them.
-        </p>
-      </header>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        {counts.map(({ category, count }) => (
-          <Link
-            key={category.slug}
-            href={`/categories/${category.slug}`}
-            className="group rounded-xl border border-hairline bg-card p-6 transition-colors hover:border-hairline-strong hover:bg-elevated"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-[15px] font-medium tracking-tight text-ink">
-                  {category.name}
-                </h2>
-                <p className="mt-1.5 max-w-sm text-[13px] leading-6 text-ash">
-                  {category.blurb}
-                </p>
-              </div>
-              <ArrowIcon className="mt-1 h-4 w-4 shrink-0 text-stone transition-colors group-hover:text-ink" />
-            </div>
-            <div className="mt-5">
-              <Badge accent={category.accent}>
-                {count} app{count === 1 ? "" : "s"}
-              </Badge>
-            </div>
-          </Link>
-        ))}
+    <>
+      <div className="wash-soft -mt-19 rounded-b-3xl pt-19">
+        <div className="mx-auto max-w-6xl px-5 pt-14 pb-12 sm:pt-20">
+          <h1 className="display text-[40px] sm:text-[52px]">Categories</h1>
+          <p className="mt-4 max-w-xl text-[17px] leading-8 text-muted">
+            Six shelves, chosen to match how people actually look for a Mac app
+            rather than how app stores like to file them.
+          </p>
+        </div>
       </div>
-    </div>
+
+      <div className="mx-auto max-w-6xl px-5 py-14">
+        <div className="grid gap-5 sm:grid-cols-2">
+          {counts.map(({ category, count }) => (
+            <Link
+              key={category.slug}
+              href={`/categories/${category.slug}`}
+              className="group rounded-2xl border border-line bg-canvas p-7 transition-shadow duration-200 hover:shadow-float"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-[20px] font-semibold tracking-tight text-ink">
+                    {category.name}
+                  </h2>
+                  <p className="mt-2 max-w-sm text-[15px] leading-7 text-muted">
+                    {category.blurb}
+                  </p>
+                </div>
+                <ArrowIcon className="mt-1.5 h-4 w-4 shrink-0 text-faint transition-colors group-hover:text-brand" />
+              </div>
+              <div className="mt-6">
+                <Badge accent={category.accent}>
+                  {count} app{count === 1 ? "" : "s"}
+                </Badge>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }

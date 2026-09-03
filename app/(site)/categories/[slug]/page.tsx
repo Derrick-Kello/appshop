@@ -31,30 +31,34 @@ export default async function CategoryPage(props: PageProps<"/categories/[slug]"
   const apps = await listApps({ category: slug, limit: 60 });
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 sm:py-16">
-      <nav className="mb-6 text-[13px] text-stone">
-        <Link href="/categories" className="transition-colors hover:text-ink">
-          Categories
-        </Link>
-        <span className="mx-2">/</span>
-        <span className="text-mute">{category.name}</span>
-      </nav>
+    <>
+      <div className="wash-soft -mt-19 rounded-b-3xl pt-19">
+        <div className="mx-auto max-w-6xl px-5 pt-12 pb-12 sm:pt-16">
+          <nav className="mb-8 flex items-center gap-2 text-[15px] text-muted">
+            <Link href="/categories" className="transition-colors hover:text-ink">
+              Categories
+            </Link>
+            <span className="text-ghost">/</span>
+            <span className="text-ink">{category.name}</span>
+          </nav>
 
-      <header className="mb-10">
-        <h1 className="text-2xl font-medium tracking-tight text-ink">{category.name}</h1>
-        <p className="mt-1.5 max-w-xl text-[13px] leading-6 text-ash">{category.blurb}</p>
-      </header>
+          <h1 className="display text-[40px] sm:text-[52px]">{category.name}</h1>
+          <p className="mt-4 max-w-xl text-[17px] leading-8 text-muted">{category.blurb}</p>
+        </div>
+      </div>
 
-      {apps.length > 0 ? (
-        <AppGrid apps={apps} />
-      ) : (
-        <EmptyState
-          title={`Nothing in ${category.name} yet`}
-          action={<ButtonLink href="/dashboard/new">Publish an app</ButtonLink>}
-        >
-          This shelf is waiting for its first listing.
-        </EmptyState>
-      )}
-    </div>
+      <div className="mx-auto max-w-6xl px-5 py-14">
+        {apps.length > 0 ? (
+          <AppGrid apps={apps} />
+        ) : (
+          <EmptyState
+            title={`Nothing in ${category.name} yet`}
+            action={<ButtonLink href="/dashboard/new">Publish an app</ButtonLink>}
+          >
+            This shelf is waiting for its first listing.
+          </EmptyState>
+        )}
+      </div>
+    </>
   );
 }

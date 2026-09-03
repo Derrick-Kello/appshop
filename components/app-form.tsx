@@ -85,7 +85,7 @@ function RepoImporter({
   }
 
   return (
-    <Card className="p-5">
+    <Card className="p-6">
       <Field
         label="GitHub repository"
         hint="Public repos only. Paste the URL or type owner/repo."
@@ -103,11 +103,11 @@ function RepoImporter({
               }
             }}
             placeholder="github.com/owner/repo"
-            className="font-mono text-[13px]"
+            className="font-mono text-[14px]"
           />
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             onClick={() => void load()}
             disabled={loading || disabled || !value.trim()}
             className="shrink-0"
@@ -127,62 +127,62 @@ function RepoSummary({ data }: { data: Imported }) {
   const build = release?.builds[0];
 
   return (
-    <Card className="p-5">
+    <Card className="p-6">
       <div className="flex items-start gap-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={repo.ownerAvatar}
           alt=""
-          className="h-10 w-10 shrink-0 rounded-lg border border-hairline"
+          className="h-12 w-12 shrink-0 rounded-xl border border-line"
         />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-[13px] text-ink">{repo.fullName}</span>
+            <span className="text-[16px] font-semibold text-ink">{repo.fullName}</span>
             {suggestion.verified ? (
-              <Badge accent="green">
-                <CheckIcon className="h-3 w-3" />
+              <Badge accent="good">
+                <CheckIcon className="h-3.5 w-3.5" />
                 You can publish this
               </Badge>
             ) : (
-              <Badge accent="yellow">Unverified</Badge>
+              <Badge accent="warn">Unverified</Badge>
             )}
           </div>
 
           {repo.description && (
-            <p className="mt-1.5 text-[13px] leading-6 text-mute">{repo.description}</p>
+            <p className="mt-2 text-[15px] leading-7 text-muted">{repo.description}</p>
           )}
 
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-stone">
+          <div className="mt-3.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[14px] text-muted">
             <span className="flex items-center gap-1">
-              <StarIcon className="h-3.5 w-3.5" />
+              <StarIcon className="h-4 w-4" />
               {repo.stars}
             </span>
             {repo.license && <span>{repo.license}</span>}
-            {repo.archived && <span className="text-accent-yellow">Archived</span>}
+            {repo.archived && <span className="text-warn">Archived</span>}
           </div>
         </div>
       </div>
 
-      <div className="mt-4 border-t border-hairline pt-4 text-[13px]">
+      <div className="mt-5 border-t border-line pt-5 text-[15px] leading-7">
         {release ? (
           build ? (
-            <p className="flex flex-wrap items-center gap-2 text-mute">
-              <CheckIcon className="h-4 w-4 text-accent-green" />
+            <p className="flex flex-wrap items-center gap-2 text-muted">
+              <CheckIcon className="h-4.5 w-4.5 text-good" />
               Latest release{" "}
-              <span className="font-mono text-charcoal">{release.tag}</span> ships{" "}
-              <span className="text-charcoal">{build.name}</span> ·{" "}
+              <span className="font-medium text-ink">{release.tag}</span> ships{" "}
+              <span className="font-medium text-ink">{build.name}</span> ·{" "}
               {archLabel(build.arch)} · {formatBytes(build.size)}
             </p>
           ) : (
-            <p className="flex items-start gap-2 text-mute">
-              <WarnIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent-yellow" />
+            <p className="flex items-start gap-2.5 text-muted">
+              <WarnIcon className="mt-1 h-4.5 w-4.5 shrink-0 text-warn" />
               Release {release.tag} has no .dmg, .pkg or .zip attached, so there is
               nothing for the download button to resolve to yet.
             </p>
           )
         ) : (
-          <p className="flex items-start gap-2 text-mute">
-            <WarnIcon className="mt-0.5 h-4 w-4 shrink-0 text-accent-yellow" />
+          <p className="flex items-start gap-2.5 text-muted">
+            <WarnIcon className="mt-1 h-4.5 w-4.5 shrink-0 text-warn" />
             No published release. You can still list the app — the download appears
             the moment you tag one.
           </p>
@@ -190,7 +190,7 @@ function RepoSummary({ data }: { data: Imported }) {
       </div>
 
       {!suggestion.verified && (
-        <p className="mt-3 text-[12px] leading-5 text-ash">
+        <p className="mt-4 text-[14px] leading-6 text-muted">
           Appshop marks a listing verified when the signed-in GitHub account owns
           the repository or has push access to it. Sign in with GitHub to claim it.
         </p>
@@ -252,10 +252,10 @@ export function AppForm({
         {app && <input type="hidden" name="id" value={app.id} />}
         <input type="hidden" name="repo" value={repo} />
 
-        <Card className="space-y-5 p-5">
+        <Card className="space-y-6 p-6">
           <div className="flex items-start gap-4">
             <AppIcon name={name || "A"} slug={slug || "app"} size="md" />
-            <p className="text-[12px] leading-5 text-ash">
+            <p className="text-[14px] leading-6 text-muted">
               Without an icon URL, Appshop generates a stable mark from the app&rsquo;s
               address. Point the icon field at a PNG in your repo to replace it.
             </p>
@@ -285,7 +285,7 @@ export function AppForm({
                   setSlugEdited(true);
                   setSlug(slugify(event.target.value));
                 }}
-                className="font-mono text-[13px]"
+                className="font-mono text-[14px]"
               />
             </Field>
           </div>
@@ -329,7 +329,7 @@ export function AppForm({
           </div>
         </Card>
 
-        <Card className="space-y-5 p-5">
+        <Card className="space-y-6 p-6">
           <Field
             label="Description"
             hint="Markdown. Imported from your README, so trim it down to what a store page needs."
@@ -340,7 +340,7 @@ export function AppForm({
               maxLength={20000}
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="font-mono text-[12.5px] leading-6"
+              className="font-mono text-[13.5px] leading-7"
             />
           </Field>
 
@@ -385,7 +385,7 @@ export function AppForm({
               name="screenshots"
               rows={4}
               defaultValue={app?.screenshots.join("\n") ?? ""}
-              className="font-mono text-[12.5px]"
+              className="font-mono text-[13.5px]"
               placeholder="https://raw.githubusercontent.com/owner/repo/HEAD/docs/shot-1.png"
             />
           </Field>
@@ -406,7 +406,7 @@ export function AppForm({
         <div className="flex items-center gap-3">
           <SubmitButton label={mode === "create" ? "Publish app" : "Save changes"} />
           {mode === "create" && !ready && (
-            <span className="text-[13px] text-ash">Fetch a repository to continue.</span>
+            <span className="text-[15px] text-muted">Fetch a repository to continue.</span>
           )}
         </div>
       </form>

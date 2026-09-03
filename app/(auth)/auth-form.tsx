@@ -22,14 +22,10 @@ function Submit({ label }: { label: string }) {
 function GitHubButton() {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-hairline bg-elevated text-sm font-medium text-ink transition-colors hover:border-hairline-strong hover:bg-card disabled:text-ash"
-    >
+    <Button type="submit" variant="outline" size="lg" className="w-full" disabled={pending}>
       <GitHubIcon />
       Continue with GitHub
-    </button>
+    </Button>
   );
 }
 
@@ -49,28 +45,28 @@ export function AuthForm({
   );
 
   return (
-    <div className="rounded-xl border border-hairline bg-card p-6 shadow-2xl shadow-black/40">
-      <h1 className="text-lg font-medium tracking-tight text-ink">
-        {isSignUp ? "Create your account" : "Sign in"}
+    <div className="rounded-3xl border border-line bg-canvas p-8 shadow-float">
+      <h1 className="display-sm text-[28px]">
+        {isSignUp ? "Create your account" : "Log in"}
       </h1>
-      <p className="mt-1 text-[13px] leading-6 text-ash">
+      <p className="mt-2 text-[15px] leading-7 text-muted">
         {isSignUp
           ? "Publishing takes a public GitHub repo with a tagged release. Nothing gets uploaded."
           : "Welcome back. Your listings are where you left them."}
       </p>
 
-      <form action={signInWithGitHub} className="mt-6">
+      <form action={signInWithGitHub} className="mt-7">
         <input type="hidden" name="next" value={next} />
         <GitHubButton />
       </form>
 
-      <div className="my-6 flex items-center gap-3">
-        <span className="h-px flex-1 bg-hairline" />
-        <span className="text-[11px] tracking-wide text-stone uppercase">or</span>
-        <span className="h-px flex-1 bg-hairline" />
+      <div className="my-7 flex items-center gap-4">
+        <span className="h-px flex-1 bg-line" />
+        <span className="text-[13px] text-faint">or</span>
+        <span className="h-px flex-1 bg-line" />
       </div>
 
-      <form action={action} className="space-y-4">
+      <form action={action} className="space-y-5">
         <input type="hidden" name="next" value={next} />
 
         {isSignUp && (
@@ -106,16 +102,16 @@ export function AuthForm({
           <Notice tone="error">{notice}</Notice>
         ) : null}
 
-        <Submit label={isSignUp ? "Create account" : "Sign in"} />
+        <Submit label={isSignUp ? "Create account" : "Log in"} />
       </form>
 
-      <p className="mt-6 text-center text-[13px] text-ash">
+      <p className="mt-7 text-center text-[15px] text-muted">
         {isSignUp ? "Already have an account? " : "New here? "}
         <Link
           href={isSignUp ? "/sign-in" : "/sign-up"}
-          className="text-ink underline decoration-hairline-strong underline-offset-2 transition-colors hover:decoration-accent-green"
+          className="font-medium text-brand transition-colors hover:text-brand-deep"
         >
-          {isSignUp ? "Sign in" : "Create an account"}
+          {isSignUp ? "Log in" : "Create an account"}
         </Link>
       </p>
     </div>

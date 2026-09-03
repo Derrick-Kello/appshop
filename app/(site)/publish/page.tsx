@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { AppleIcon, CheckIcon, GitHubIcon } from "@/components/icons";
-import { ButtonLink, Card } from "@/components/ui";
+import { ButtonLink, Card, Panel } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Publishing on Appshop",
@@ -44,91 +44,91 @@ const FAQ = [
 
 export default function PublishPage() {
   return (
-    <div className="mx-auto max-w-3xl px-5 py-12 sm:py-16">
-      <header className="mb-10">
-        <h1 className="text-3xl font-medium tracking-tight text-ink">
-          Publishing on Appshop
-        </h1>
-        <p className="mt-3 text-[15px] leading-7 text-mute">
-          Appshop is a storefront on top of GitHub releases. There is no upload
-          step because there is nothing to upload: the listing is metadata, and
-          the download resolves against your repository every time it&rsquo;s clicked.
-        </p>
-      </header>
-
-      <Card className="mb-10 p-6">
-        <h2 className="text-[13px] font-medium tracking-wide text-ash uppercase">
-          What you need
-        </h2>
-        <ul className="mt-4 space-y-2.5">
-          {REQUIREMENTS.map((item) => (
-            <li key={item} className="flex items-start gap-2.5 text-[14px] leading-6 text-mute">
-              <CheckIcon className="mt-1 h-4 w-4 shrink-0 text-accent-green" />
-              {item}
-            </li>
-          ))}
-        </ul>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <ButtonLink href="/dashboard/new">
-            <GitHubIcon />
-            Publish an app
-          </ButtonLink>
-          <ButtonLink href="/sign-up" variant="secondary">
-            Create an account
-          </ButtonLink>
+    <>
+      <div className="wash-soft -mt-19 rounded-b-3xl pt-19">
+        <div className="mx-auto max-w-3xl px-5 pt-14 pb-14 sm:pt-20">
+          <h1 className="display text-[42px] sm:text-[54px]">
+            Publishing on Appshop
+          </h1>
+          <p className="mt-5 text-[17px] leading-8 text-muted">
+            Appshop is a storefront on top of GitHub releases. There is no upload
+            step because there is nothing to upload: the listing is metadata, and
+            the download resolves against your repository every time it&rsquo;s
+            clicked.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <ButtonLink href="/dashboard/new" size="lg">
+              <GitHubIcon />
+              Publish an app
+            </ButtonLink>
+            <ButtonLink href="/sign-up" variant="outline" size="lg">
+              Create an account
+            </ButtonLink>
+          </div>
         </div>
-      </Card>
+      </div>
 
-      <section className="mb-10">
-        <h2 className="mb-4 text-lg font-medium tracking-tight text-ink">
-          Naming your release assets
-        </h2>
-        <p className="text-[14px] leading-7 text-mute">
-          The store reads the architecture out of the filename, so a release that
-          ships more than one build should say which is which. Anything containing{" "}
-          <Code>arm64</Code>, <Code>aarch64</Code> or <Code>apple-silicon</Code>{" "}
-          is served to Apple silicon; <Code>x86_64</Code> or <Code>intel</Code>{" "}
-          marks the Intel build; <Code>universal</Code> or an unmarked name is
-          treated as running everywhere.
-        </p>
-
-        <Card className="mt-5 p-5">
-          <p className="mb-3 flex items-center gap-2 text-[12px] tracking-wide text-ash uppercase">
-            <AppleIcon className="h-3.5 w-3.5" />
-            A release that works well
-          </p>
-          <ul className="space-y-1.5 font-mono text-[12.5px] text-charcoal">
-            <li>Crest-1.1.0-universal.dmg</li>
-            <li>Workstation-0.1.0-macOS-arm64.zip</li>
-            <li>Workstation-0.1.0-macOS-x86_64.zip</li>
+      <div className="mx-auto max-w-3xl px-5 py-14">
+        <Panel className="p-8">
+          <h2 className="text-[15px] font-semibold text-ink">What you need</h2>
+          <ul className="mt-5 space-y-3.5">
+            {REQUIREMENTS.map((item) => (
+              <li key={item} className="flex items-start gap-3 text-[16px] leading-7 text-body">
+                <CheckIcon className="mt-1 h-4.5 w-4.5 shrink-0 text-good" />
+                {item}
+              </li>
+            ))}
           </ul>
-          <p className="mt-4 text-[12px] leading-5 text-ash">
-            Checksums and signatures alongside them are ignored rather than
-            offered as downloads.
-          </p>
-        </Card>
-      </section>
+        </Panel>
 
-      <section>
-        <h2 className="mb-5 text-lg font-medium tracking-tight text-ink">
-          Questions people actually ask
-        </h2>
-        <dl className="divide-y divide-hairline border-y border-hairline">
-          {FAQ.map((item) => (
-            <div key={item.q} className="py-5">
-              <dt className="text-[14px] font-medium text-ink">{item.q}</dt>
-              <dd className="mt-1.5 text-[14px] leading-7 text-mute">{item.a}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-    </div>
+        <section className="mt-14">
+          <h2 className="display-sm text-[28px]">Naming your release assets</h2>
+          <p className="mt-4 text-[16px] leading-8 text-body">
+            The store reads the architecture out of the filename, so a release that
+            ships more than one build should say which is which. Anything
+            containing <Code>arm64</Code>, <Code>aarch64</Code> or{" "}
+            <Code>apple-silicon</Code> is served to Apple silicon;{" "}
+            <Code>x86_64</Code> or <Code>intel</Code> marks the Intel build;{" "}
+            <Code>universal</Code> or an unmarked name is treated as running
+            everywhere.
+          </p>
+
+          <Card className="mt-6 p-6">
+            <p className="mb-4 flex items-center gap-2 text-[15px] font-semibold text-ink">
+              <AppleIcon className="h-4 w-4" />
+              A release that works well
+            </p>
+            <ul className="space-y-2 font-mono text-[14px] text-ink-2">
+              <li>Crest-1.1.0-universal.dmg</li>
+              <li>Workstation-0.1.0-macOS-arm64.zip</li>
+              <li>Workstation-0.1.0-macOS-x86_64.zip</li>
+            </ul>
+            <p className="mt-5 text-[14px] leading-6 text-muted">
+              Checksums and signatures alongside them are ignored rather than
+              offered as downloads.
+            </p>
+          </Card>
+        </section>
+
+        <section className="mt-14">
+          <h2 className="display-sm mb-6 text-[28px]">Questions people actually ask</h2>
+          <dl className="divide-y divide-line border-y border-line">
+            {FAQ.map((item) => (
+              <div key={item.q} className="py-6">
+                <dt className="text-[17px] font-semibold text-ink">{item.q}</dt>
+                <dd className="mt-2 text-[16px] leading-8 text-muted">{item.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      </div>
+    </>
   );
 }
 
 function Code({ children }: { children: React.ReactNode }) {
   return (
-    <code className="rounded-xs bg-deep px-1.5 py-0.5 font-mono text-[0.85em] text-charcoal">
+    <code className="rounded-md bg-surface-2 px-1.5 py-0.5 font-mono text-[0.88em] text-ink-2">
       {children}
     </code>
   );

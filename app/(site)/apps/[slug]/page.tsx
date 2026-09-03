@@ -86,15 +86,13 @@ export default async function AppPage(props: PageProps<"/apps/[slug]">) {
 
   return (
     <article>
-      <header className="relative overflow-hidden border-b border-hairline">
-        <div aria-hidden className="stage-glow pointer-events-none absolute inset-0" />
-
-        <div className="relative mx-auto max-w-6xl px-5 pt-12 pb-10 sm:pt-16">
-          <nav className="mb-8 text-[13px] text-stone">
+      <header className="wash-soft -mt-19 rounded-b-3xl pt-19">
+        <div className="mx-auto max-w-6xl px-5 pt-12 pb-14 sm:pt-16">
+          <nav className="mb-10 flex items-center gap-2 text-[15px] text-muted">
             <Link href="/apps" className="transition-colors hover:text-ink">
               Apps
             </Link>
-            <span className="mx-2">/</span>
+            <span className="text-ghost">/</span>
             <Link
               href={`/categories/${app.category}`}
               className="transition-colors hover:text-ink"
@@ -103,47 +101,47 @@ export default async function AppPage(props: PageProps<"/apps/[slug]">) {
             </Link>
           </nav>
 
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+          <div className="flex flex-col gap-7 sm:flex-row sm:items-start">
             <AppIcon
               name={app.name}
               slug={app.slug}
               src={app.iconUrl}
               size="xl"
-              className="animate-soften"
+              className="animate-rise"
             />
 
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-3xl font-medium tracking-tight text-ink">{app.name}</h1>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="display-sm text-[40px] sm:text-[46px]">{app.name}</h1>
                 {app.verified && (
-                  <span className="flex items-center gap-1 text-[12px] text-accent-green">
+                  <Badge accent="brand">
                     <VerifiedIcon className="h-4 w-4" />
                     Verified publisher
-                  </span>
+                  </Badge>
                 )}
               </div>
 
-              <p className="mt-2 max-w-2xl text-[15px] leading-7 text-mute">
+              <p className="mt-3 max-w-2xl text-[18px] leading-8 text-muted">
                 {app.tagline}
               </p>
 
-              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-ash">
+              <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 text-[15px] text-muted">
                 <Link
                   href={`/developers/${app.ownerGithub || app.repoOwner}`}
-                  className="transition-colors hover:text-ink"
+                  className="font-medium text-ink transition-colors hover:text-brand"
                 >
                   {app.ownerName || app.repoOwner}
                 </Link>
                 <Badge accent={accent}>{categoryName(app.category)}</Badge>
                 {stars > 0 && (
                   <span className="flex items-center gap-1.5">
-                    <StarIcon className="h-3.5 w-3.5" />
+                    <StarIcon className="h-4 w-4" />
                     {formatCount(stars)}
                   </span>
                 )}
                 {app.downloads > 0 && (
                   <span className="flex items-center gap-1.5">
-                    <DownloadIcon className="h-3.5 w-3.5" />
+                    <DownloadIcon className="h-4 w-4" />
                     {formatCount(app.downloads)} downloads
                   </span>
                 )}
@@ -154,15 +152,15 @@ export default async function AppPage(props: PageProps<"/apps/[slug]">) {
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-5 py-12">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-12">
+      <div className="mx-auto max-w-6xl px-5 py-14">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_21rem] lg:gap-16">
           <div className="min-w-0">
             {app.screenshots.length > 0 && <Screenshots app={app} />}
 
             <section>
               <h2 className="sr-only">About {app.name}</h2>
               <div
-                className="text-[14px] text-body"
+                className="text-[16px] text-body"
                 dangerouslySetInnerHTML={{
                   __html: renderMarkdown(app.description || repo?.description || ""),
                 }}
@@ -170,25 +168,21 @@ export default async function AppPage(props: PageProps<"/apps/[slug]">) {
             </section>
 
             {latest?.notes && (
-              <section className="mt-12 border-t border-hairline pt-10">
-                <div className="mb-1 flex items-center gap-2.5">
-                  <h2 className="text-lg font-medium tracking-tight text-ink">
-                    What&rsquo;s new
-                  </h2>
-                  <Badge>{latest.tag}</Badge>
+              <section className="mt-14 border-t border-line pt-12">
+                <div className="mb-2 flex items-center gap-3">
+                  <h2 className="display-sm text-[26px]">What&rsquo;s new</h2>
+                  <Badge accent="brand">{latest.tag}</Badge>
                 </div>
                 <div
-                  className="text-[14px] text-body"
+                  className="text-[16px] text-body"
                   dangerouslySetInnerHTML={{ __html: renderMarkdown(latest.notes) }}
                 />
               </section>
             )}
 
             {app.tags.length > 0 && (
-              <section className="mt-12 border-t border-hairline pt-8">
-                <h2 className="mb-3 text-[12px] font-medium tracking-wide text-ash uppercase">
-                  Tags
-                </h2>
+              <section className="mt-14 border-t border-line pt-10">
+                <h2 className="mb-4 text-[15px] font-semibold text-ink">Tags</h2>
                 <div className="flex flex-wrap gap-2">
                   {app.tags.map((tag) => (
                     <Link key={tag} href={`/apps?q=${encodeURIComponent(tag)}`}>
@@ -200,22 +194,18 @@ export default async function AppPage(props: PageProps<"/apps/[slug]">) {
             )}
           </div>
 
-          <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+          <aside className="space-y-5 lg:sticky lg:top-28 lg:self-start">
             <DownloadPanel app={app} release={latest} />
 
             {history.length > 1 && (
-              <Card className="p-5">
-                <h2 className="mb-2.5 text-[12px] font-medium tracking-wide text-ash uppercase">
-                  Release history
-                </h2>
+              <Card className="p-6">
+                <h2 className="mb-3 text-[15px] font-semibold text-ink">Release history</h2>
                 <ReleaseHistory releases={history.slice(0, 6)} />
               </Card>
             )}
 
-            <Card className="p-5">
-              <h2 className="mb-3 text-[12px] font-medium tracking-wide text-ash uppercase">
-                Publisher
-              </h2>
+            <Card className="p-6">
+              <h2 className="mb-4 text-[15px] font-semibold text-ink">Publisher</h2>
               <Link
                 href={`/developers/${app.ownerGithub || app.repoOwner}`}
                 className="flex items-center gap-3"
@@ -225,18 +215,18 @@ export default async function AppPage(props: PageProps<"/apps/[slug]">) {
                   <img
                     src={app.ownerAvatar}
                     alt=""
-                    className="h-9 w-9 rounded-full border border-hairline"
+                    className="h-11 w-11 rounded-full border border-line"
                   />
                 ) : (
-                  <span className="grid h-9 w-9 place-items-center rounded-full border border-hairline bg-elevated text-[13px] text-charcoal">
+                  <span className="grid h-11 w-11 place-items-center rounded-full bg-brand-soft text-[15px] font-medium text-brand-ink">
                     {(app.ownerName || app.repoOwner).slice(0, 1).toUpperCase()}
                   </span>
                 )}
                 <span className="min-w-0">
-                  <span className="block truncate text-[13px] font-medium text-ink">
+                  <span className="block truncate text-[15px] font-medium text-ink">
                     {app.ownerName || app.repoOwner}
                   </span>
-                  <span className="block truncate text-[12px] text-ash">
+                  <span className="block truncate text-[14px] text-muted">
                     @{app.ownerGithub || app.repoOwner}
                   </span>
                 </span>
@@ -247,7 +237,7 @@ export default async function AppPage(props: PageProps<"/apps/[slug]">) {
                   href={app.homepage}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-4 block truncate text-[13px] text-mute transition-colors hover:text-ink"
+                  className="mt-5 block truncate text-[15px] text-brand transition-colors hover:text-brand-deep"
                 >
                   {app.homepage.replace(/^https?:\/\//, "")}
                 </a>
@@ -257,9 +247,9 @@ export default async function AppPage(props: PageProps<"/apps/[slug]">) {
                 href={`https://github.com/${app.repoOwner}/${app.repoName}`}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-2 flex items-center gap-2 text-[13px] text-mute transition-colors hover:text-ink"
+                className="mt-2.5 flex items-center gap-2 text-[15px] text-body transition-colors hover:text-ink"
               >
-                <GitHubIcon className="h-3.5 w-3.5" />
+                <GitHubIcon className="h-4 w-4" />
                 {app.repoOwner}/{app.repoName}
               </a>
             </Card>
@@ -267,11 +257,11 @@ export default async function AppPage(props: PageProps<"/apps/[slug]">) {
         </div>
 
         {related.length > 0 && (
-          <section className="mt-16 border-t border-hairline pt-12">
-            <h2 className="mb-6 text-lg font-medium tracking-tight text-ink">
+          <section className="mt-20 border-t border-line pt-14">
+            <h2 className="display-sm mb-8 text-[28px]">
               More in {categoryName(app.category)}
             </h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {related.slice(0, 3).map((item) => (
                 <AppCard key={item.id} app={item} />
               ))}
@@ -285,9 +275,9 @@ export default async function AppPage(props: PageProps<"/apps/[slug]">) {
 
 function Screenshots({ app }: { app: App }) {
   return (
-    <section className="mb-10 -mx-5 sm:mx-0">
+    <section className="mb-12 -mx-5 sm:mx-0">
       <h2 className="sr-only">Screenshots</h2>
-      <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 sm:px-0">
+      <div className="flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-2 sm:px-0">
         {app.screenshots.map((src, index) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -295,7 +285,7 @@ function Screenshots({ app }: { app: App }) {
             src={src}
             alt={`${app.name} screenshot ${index + 1}`}
             loading={index === 0 ? "eager" : "lazy"}
-            className="h-auto w-[min(100%,42rem)] shrink-0 snap-start rounded-xl border border-hairline bg-surface object-cover"
+            className="h-auto w-[min(100%,44rem)] shrink-0 snap-start rounded-2xl border border-line bg-surface object-cover"
           />
         ))}
       </div>

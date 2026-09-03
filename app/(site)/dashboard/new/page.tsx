@@ -13,18 +13,18 @@ export default async function NewAppPage() {
   await requireUser("/dashboard/new");
 
   return (
-    <div className="mx-auto max-w-3xl px-5 py-12 sm:py-16">
-      <nav className="mb-6 text-[13px] text-stone">
+    <div className="mx-auto max-w-3xl px-5 py-14 sm:py-20">
+      <nav className="mb-8 flex items-center gap-2 text-[15px] text-muted">
         <Link href="/dashboard" className="transition-colors hover:text-ink">
           Your apps
         </Link>
-        <span className="mx-2">/</span>
-        <span className="text-mute">Publish</span>
+        <span className="text-ghost">/</span>
+        <span className="text-ink">Publish</span>
       </nav>
 
-      <header className="mb-8">
-        <h1 className="text-2xl font-medium tracking-tight text-ink">Publish an app</h1>
-        <p className="mt-1.5 max-w-xl text-[13px] leading-6 text-ash">
+      <header className="mb-10">
+        <h1 className="display text-[40px] sm:text-[46px]">Publish an app</h1>
+        <p className="mt-3 max-w-xl text-[16px] leading-8 text-muted">
           Start with the repository. Appshop reads its description, topics, README
           and latest release, then leaves you to correct whatever it got wrong.
         </p>

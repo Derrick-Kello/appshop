@@ -16,39 +16,39 @@ export function AppCard({ app, className }: { app: App; className?: string }) {
     <Link
       href={`/apps/${app.slug}`}
       className={cx(
-        "group flex flex-col gap-4 rounded-xl border border-hairline bg-card p-5",
-        "transition-colors duration-150 hover:border-hairline-strong hover:bg-elevated",
+        "group flex flex-col gap-4 rounded-2xl border border-line bg-canvas p-6",
+        "transition-shadow duration-200 hover:shadow-float",
         className,
       )}
     >
-      <div className="flex items-start gap-3.5">
+      <div className="flex items-start gap-4">
         <AppIcon name={app.name} slug={app.slug} src={app.iconUrl} size="md" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h3 className="truncate text-[15px] font-medium tracking-tight text-ink">
+            <h3 className="truncate text-[17px] font-semibold tracking-tight text-ink">
               {app.name}
             </h3>
             {app.verified && (
-              <VerifiedIcon className="h-3.5 w-3.5 shrink-0 text-accent-green" />
+              <VerifiedIcon className="h-4 w-4 shrink-0 text-brand" />
             )}
           </div>
-          <p className="mt-0.5 truncate text-[13px] text-ash">
+          <p className="mt-1 truncate text-[14px] text-muted">
             {app.ownerName || app.repoOwner}
           </p>
         </div>
       </div>
 
-      <p className="line-clamp-2 min-h-[2.75rem] text-[13px] leading-[1.45rem] text-mute">
+      <p className="line-clamp-2 min-h-[3.25rem] text-[15px] leading-[1.625rem] text-body">
         {app.tagline || excerpt(app.description, 110)}
       </p>
 
-      <div className="mt-auto flex items-center justify-between gap-3 pt-1">
+      <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4">
         <Badge accent={accent}>{categoryName(app.category)}</Badge>
-        <span className="flex items-center gap-3 text-[12px] text-stone">
-          {app.latestVersion && <span className="font-mono">{app.latestVersion}</span>}
+        <span className="flex items-center gap-3 text-[14px] text-muted">
+          {app.latestVersion && <span>{app.latestVersion}</span>}
           {app.downloads > 0 && (
-            <span className="flex items-center gap-1">
-              <DownloadIcon className="h-3.5 w-3.5" />
+            <span className="flex items-center gap-1.5">
+              <DownloadIcon className="h-4 w-4" />
               {formatCount(app.downloads)}
             </span>
           )}
@@ -60,7 +60,7 @@ export function AppCard({ app, className }: { app: App; className?: string }) {
 
 export function AppGrid({ apps }: { apps: App[] }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
       {apps.map((app) => (
         <AppCard key={app.id} app={app} />
       ))}

@@ -2,7 +2,7 @@ import { ButtonLink, EmptyState } from "@/components/ui";
 
 export default function ListingNotFound() {
   return (
-    <div className="mx-auto max-w-2xl px-5 py-24">
+    <div className="mx-auto max-w-2xl px-5 py-28">
       <EmptyState
         title="That listing isn't yours to edit"
         action={<ButtonLink href="/dashboard">Back to your apps</ButtonLink>}

@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { AppGrid } from "@/components/app-card";
-import { SearchField } from "@/components/search-field";
 import { ButtonLink, EmptyState, cx } from "@/components/ui";
 import { listApps } from "@/lib/apps";
 import { CATEGORIES } from "@/lib/categories";
@@ -46,22 +45,22 @@ export default async function BrowsePage(props: PageProps<"/apps">) {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 sm:py-16">
-      <header className="mb-8">
-        <h1 className="text-2xl font-medium tracking-tight text-ink">
-          {q ? `Results for "${q}"` : "Browse apps"}
-        </h1>
-        <p className="mt-1.5 text-[13px] text-ash">
-          {apps.length === 0
-            ? "Nothing here yet."
-            : `${apps.length} app${apps.length === 1 ? "" : "s"}, every download resolved from a GitHub release.`}
-        </p>
-      </header>
+    <>
+      <div className="wash-soft -mt-19 rounded-b-3xl pt-19">
+        <div className="mx-auto max-w-6xl px-5 pt-14 pb-14 sm:pt-20">
+          <h1 className="display text-[40px] sm:text-[52px]">
+            {q ? `Results for "${q}"` : "Browse apps"}
+          </h1>
+          <p className="mt-4 text-[17px] leading-8 text-muted">
+            {apps.length === 0
+              ? "Nothing here yet."
+              : `${apps.length} app${apps.length === 1 ? "" : "s"}, every download resolved from a GitHub release.`}
+          </p>
+        </div>
+      </div>
 
-      <div className="mb-8 flex flex-col gap-4 border-b border-hairline pb-6 lg:flex-row lg:items-center lg:justify-between">
-        <SearchField className="w-full lg:w-80" />
-
-        <div className="flex flex-wrap items-center gap-1">
+      <div className="mx-auto max-w-6xl px-5 py-12">
+        <div className="mb-6 flex flex-wrap items-center gap-2">
           <Chip href={query({ category: "" })} active={!category}>
             All
           </Chip>
@@ -75,42 +74,42 @@ export default async function BrowsePage(props: PageProps<"/apps">) {
             </Chip>
           ))}
         </div>
-      </div>
 
-      <div className="mb-6 flex items-center gap-1">
-        <span className="mr-1 text-[12px] text-stone">Sort</span>
-        {SORTS.map((option) => (
-          <Chip
-            key={option.key}
-            href={query({ sort: option.key === "recent" ? "" : option.key })}
-            active={sort === option.key}
+        <div className="mb-10 flex items-center gap-2 border-b border-line pb-6">
+          <span className="mr-1 text-[14px] text-muted">Sort</span>
+          {SORTS.map((option) => (
+            <Chip
+              key={option.key}
+              href={query({ sort: option.key === "recent" ? "" : option.key })}
+              active={sort === option.key}
+            >
+              {option.label}
+            </Chip>
+          ))}
+        </div>
+
+        {apps.length > 0 ? (
+          <AppGrid apps={apps} />
+        ) : (
+          <EmptyState
+            title={q ? `No app matches "${q}"` : "No apps in this slice yet"}
+            action={
+              q ? (
+                <ButtonLink href="/apps" variant="outline">
+                  Clear the search
+                </ButtonLink>
+              ) : (
+                <ButtonLink href="/dashboard/new">Publish an app</ButtonLink>
+              )
+            }
           >
-            {option.label}
-          </Chip>
-        ))}
+            {q
+              ? "Try a shorter query, or browse a category instead."
+              : "Point a GitHub repository at Appshop and it lands here."}
+          </EmptyState>
+        )}
       </div>
-
-      {apps.length > 0 ? (
-        <AppGrid apps={apps} />
-      ) : (
-        <EmptyState
-          title={q ? `No app matches "${q}"` : "No apps in this slice yet"}
-          action={
-            q ? (
-              <ButtonLink href="/apps" variant="secondary">
-                Clear the search
-              </ButtonLink>
-            ) : (
-              <ButtonLink href="/dashboard/new">Publish an app</ButtonLink>
-            )
-          }
-        >
-          {q
-            ? "Try a shorter query, or browse a category instead."
-            : "Point a GitHub repository at Appshop and it lands here."}
-        </EmptyState>
-      )}
-    </div>
+    </>
   );
 }
 
@@ -128,10 +127,10 @@ function Chip({
       href={href}
       aria-current={active ? "page" : undefined}
       className={cx(
-        "rounded-full px-3 py-1.5 text-[13px] transition-colors",
+        "rounded-full px-4 py-2 text-[15px] transition-colors",
         active
-          ? "bg-ink text-canvas"
-          : "text-mute hover:bg-elevated hover:text-ink",
+          ? "bg-ink text-white"
+          : "bg-surface text-body hover:bg-surface-2 hover:text-ink",
       )}
     >
       {children}

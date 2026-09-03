@@ -36,49 +36,51 @@ export default async function DeveloperPage(props: PageProps<"/developers/[handl
   const downloads = apps.reduce((sum, app) => sum + app.downloads, 0);
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-12 sm:py-16">
-      <header className="mb-10 flex flex-wrap items-center gap-5">
-        {profile?.ownerAvatar ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={profile.ownerAvatar}
-            alt=""
-            className="h-16 w-16 rounded-full border border-hairline"
-          />
-        ) : (
-          <span className="grid h-16 w-16 place-items-center rounded-full border border-hairline bg-elevated text-xl text-charcoal">
-            {handle.slice(0, 1).toUpperCase()}
-          </span>
-        )}
-
-        <div>
-          <h1 className="text-2xl font-medium tracking-tight text-ink">
-            {profile?.ownerName || handle}
-          </h1>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-ash">
-            <a
-              href={`https://github.com/${handle}`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 transition-colors hover:text-ink"
-            >
-              <GitHubIcon className="h-3.5 w-3.5" />@{handle}
-            </a>
-            <span>
-              {apps.length} app{apps.length === 1 ? "" : "s"}
+    <>
+      <div className="wash-soft -mt-19 rounded-b-3xl pt-19">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-6 px-5 pt-14 pb-12 sm:pt-20">
+          {profile?.ownerAvatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={profile.ownerAvatar}
+              alt=""
+              className="h-20 w-20 rounded-full border border-line"
+            />
+          ) : (
+            <span className="grid h-20 w-20 place-items-center rounded-full bg-brand-soft text-2xl font-semibold text-brand-ink">
+              {handle.slice(0, 1).toUpperCase()}
             </span>
-            {downloads > 0 && <span>{formatCount(downloads)} downloads</span>}
+          )}
+
+          <div>
+            <h1 className="display-sm text-[36px]">{profile?.ownerName || handle}</h1>
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[15px] text-muted">
+              <a
+                href={`https://github.com/${handle}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 transition-colors hover:text-ink"
+              >
+                <GitHubIcon className="h-4 w-4" />@{handle}
+              </a>
+              <span>
+                {apps.length} app{apps.length === 1 ? "" : "s"}
+              </span>
+              {downloads > 0 && <span>{formatCount(downloads)} downloads</span>}
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      {apps.length > 0 ? (
-        <AppGrid apps={apps} />
-      ) : (
-        <EmptyState title={`No published apps from @${handle} yet`}>
-          When they list an app here, it shows up on this page.
-        </EmptyState>
-      )}
-    </div>
+      <div className="mx-auto max-w-6xl px-5 py-14">
+        {apps.length > 0 ? (
+          <AppGrid apps={apps} />
+        ) : (
+          <EmptyState title={`No published apps from @${handle} yet`}>
+            When they list an app here, it shows up on this page.
+          </EmptyState>
+        )}
+      </div>
+    </>
   );
 }

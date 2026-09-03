@@ -2,7 +2,7 @@ import { ButtonLink, EmptyState } from "@/components/ui";
 
 export default function AppNotFound() {
   return (
-    <div className="mx-auto max-w-2xl px-5 py-24">
+    <div className="mx-auto max-w-2xl px-5 py-28">
       <EmptyState
         title="No app at that address"
         action={<ButtonLink href="/apps">Browse the store</ButtonLink>}

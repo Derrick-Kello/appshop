@@ -21,22 +21,22 @@ export default async function DashboardPage() {
   const published = apps.filter((app) => app.status === "published").length;
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-12 sm:py-16">
-      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div className="mx-auto max-w-5xl px-5 py-14 sm:py-20">
+      <header className="mb-10 flex flex-wrap items-end justify-between gap-5">
         <div>
-          <h1 className="text-2xl font-medium tracking-tight text-ink">Your apps</h1>
-          <p className="mt-1.5 text-[13px] text-ash">
+          <h1 className="display text-[40px] sm:text-[46px]">Your apps</h1>
+          <p className="mt-3 text-[16px] leading-7 text-muted">
             Listings you publish here resolve their downloads from your GitHub releases.
           </p>
         </div>
-        <ButtonLink href="/dashboard/new">
+        <ButtonLink href="/dashboard/new" size="lg">
           <PlusIcon />
           Publish an app
         </ButtonLink>
       </header>
 
       {apps.length > 0 && (
-        <div className="mb-8 grid gap-3 sm:grid-cols-3">
+        <div className="mb-10 grid gap-4 sm:grid-cols-3">
           <Stat label="Listings" value={String(apps.length)} />
           <Stat label="Published" value={String(published)} />
           <Stat label="Downloads" value={formatCount(totalDownloads)} />
@@ -44,7 +44,7 @@ export default async function DashboardPage() {
       )}
 
       {apps.length > 0 ? (
-        <ul className="space-y-3">
+        <ul className="space-y-4">
           {apps.map((app) => (
             <li key={app.id}>
               <AppRow app={app} />
@@ -66,55 +66,55 @@ export default async function DashboardPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <Card className="p-4">
-      <p className="text-[12px] text-ash">{label}</p>
-      <p className="mt-1 text-xl font-medium tracking-tight text-ink">{value}</p>
-    </Card>
+    <div className="rounded-2xl bg-surface p-5">
+      <p className="text-[14px] text-muted">{label}</p>
+      <p className="mt-1.5 text-[28px] font-semibold tracking-tight text-ink">{value}</p>
+    </div>
   );
 }
 
 const STATUS_ACCENT = {
-  published: "green",
-  unlisted: "yellow",
+  published: "good",
+  unlisted: "warn",
   draft: "neutral",
 } as const;
 
 function AppRow({ app }: { app: App }) {
   return (
-    <Card className="flex flex-wrap items-center gap-4 p-4 transition-colors hover:border-hairline-strong">
+    <Card className="flex flex-wrap items-center gap-5 p-5 transition-shadow duration-200 hover:shadow-raise">
       <AppIcon name={app.name} slug={app.slug} src={app.iconUrl} size="sm" />
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <Link
             href={`/apps/${app.slug}`}
-            className="truncate text-[14px] font-medium text-ink transition-colors hover:text-white"
+            className="truncate text-[17px] font-semibold text-ink transition-colors hover:text-brand"
           >
             {app.name}
           </Link>
           <Badge accent={STATUS_ACCENT[app.status]}>{app.status}</Badge>
         </div>
-        <p className="mt-0.5 truncate text-[12px] text-ash">
+        <p className="mt-1 truncate text-[14px] text-muted">
           {categoryName(app.category)} · {app.repoOwner}/{app.repoName}
           {app.latestVersion && ` · ${app.latestVersion}`}
           {app.releasedAt && ` · updated ${timeAgo(app.releasedAt)}`}
         </p>
       </div>
 
-      <div className="flex items-center gap-4 text-[12px] text-stone">
+      <div className="flex items-center gap-5 text-[14px] text-muted">
         {app.stars > 0 && (
-          <span className="flex items-center gap-1">
-            <StarIcon className="h-3.5 w-3.5" />
+          <span className="flex items-center gap-1.5">
+            <StarIcon className="h-4 w-4" />
             {formatCount(app.stars)}
           </span>
         )}
-        <span className="flex items-center gap-1">
-          <DownloadIcon className="h-3.5 w-3.5" />
+        <span className="flex items-center gap-1.5">
+          <DownloadIcon className="h-4 w-4" />
           {formatCount(app.downloads)}
         </span>
       </div>
 
-      <ButtonLink href={`/dashboard/apps/${app.id}`} variant="secondary" size="sm">
+      <ButtonLink href={`/dashboard/apps/${app.id}`} variant="outline" size="sm">
         Edit
       </ButtonLink>
     </Card>

@@ -44,13 +44,13 @@ function inline(text: string): string {
     .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_match, alt: string, url: string) => {
       const href = safeUrl(url);
       return href
-        ? `<img src="${href}" alt="${alt}" loading="lazy" class="my-4 max-w-full rounded-lg border border-hairline" />`
+        ? `<img src="${href}" alt="${alt}" loading="lazy" class="my-6 max-w-full rounded-xl border border-line" />`
         : alt;
     })
     .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_match, label: string, url: string) => {
       const href = safeUrl(url);
       return href
-        ? `<a href="${href}" rel="nofollow noopener noreferrer" target="_blank" class="text-ink underline decoration-hairline-strong underline-offset-2 transition-colors hover:decoration-accent-green">${label}</a>`
+        ? `<a href="${href}" rel="nofollow noopener noreferrer" target="_blank" class="text-brand underline decoration-brand-line underline-offset-2 transition-colors hover:decoration-brand">${label}</a>`
         : label;
     })
     // Bare URLs, once the bracketed forms above have had their turn. Release
@@ -58,16 +58,16 @@ function inline(text: string): string {
     .replace(
       /(^|[\s(])(https?:\/\/[^\s<>"')\]]+)/g,
       (_match, lead: string, url: string) =>
-        `${lead}<a href="${url}" rel="nofollow noopener noreferrer" target="_blank" class="break-all text-ink underline decoration-hairline-strong underline-offset-2 transition-colors hover:decoration-accent-green">${url.replace(/^https?:\/\//, "")}</a>`,
+        `${lead}<a href="${url}" rel="nofollow noopener noreferrer" target="_blank" class="break-all text-brand underline decoration-brand-line underline-offset-2 transition-colors hover:decoration-brand">${url.replace(/^https?:\/\//, "")}</a>`,
     )
-    .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-medium text-ink">$1</strong>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-ink">$1</strong>')
     .replace(/(^|[\s(])\*([^*\n]+)\*/g, "$1<em>$2</em>")
-    .replace(/~~([^~]+)~~/g, '<del class="text-ash">$1</del>');
+    .replace(/~~([^~]+)~~/g, '<del class="text-faint">$1</del>');
 
   return out.replace(
     new RegExp(`${CODE_OPEN}(\\d+)${CODE_CLOSE}`, "g"),
     (_match, index: string) =>
-      `<code class="rounded-xs bg-deep px-1.5 py-0.5 font-mono text-[0.85em] text-charcoal">${spans[Number(index)]}</code>`,
+      `<code class="rounded-md bg-surface-2 px-1.5 py-0.5 font-mono text-[0.86em] text-ink-2">${spans[Number(index)]}</code>`,
   );
 }
 
@@ -82,7 +82,7 @@ export function renderMarkdown(source: string): string {
 
   const flushParagraph = () => {
     if (paragraph.length) {
-      out.push(`<p class="my-4 leading-7">${inline(paragraph.join(" "))}</p>`);
+      out.push(`<p class="my-5 text-[16px] leading-8">${inline(paragraph.join(" "))}</p>`);
       paragraph = [];
     }
   };
@@ -101,7 +101,7 @@ export function renderMarkdown(source: string): string {
       out.push(
         inCode
           ? "</code></pre>"
-          : '<pre class="my-4 overflow-x-auto rounded-lg border border-hairline bg-surface p-4 text-[13px]"><code class="font-mono text-charcoal">',
+          : '<pre class="my-6 overflow-x-auto rounded-xl bg-surface p-5 text-[14px]"><code class="font-mono text-ink-2">',
       );
       inCode = !inCode;
       continue;
@@ -124,9 +124,9 @@ export function renderMarkdown(source: string): string {
       closeList();
       const depth = heading[1].length;
       const level = Math.min(depth + 1, 6);
-      const size = ["text-xl", "text-lg", "text-base", "text-base"][depth - 1];
+      const size = ["text-[24px]", "text-[20px]", "text-[17px]", "text-[17px]"][depth - 1];
       out.push(
-        `<h${level} class="mt-8 mb-3 ${size} font-medium tracking-tight text-ink">${inline(heading[2])}</h${level}>`,
+        `<h${level} class="mt-10 mb-3 ${size} font-semibold tracking-tight text-ink">${inline(heading[2])}</h${level}>`,
       );
       continue;
     }
@@ -135,10 +135,10 @@ export function renderMarkdown(source: string): string {
       flushParagraph();
       if (list !== "ul") {
         closeList();
-        out.push('<ul class="my-4 list-disc space-y-1.5 pl-5 marker:text-stone">');
+        out.push('<ul class="my-5 list-disc space-y-2 pl-5 marker:text-ghost">');
         list = "ul";
       }
-      out.push(`<li class="leading-7">${inline(line.replace(/^\s*[-*+]\s+/, ""))}</li>`);
+      out.push(`<li class="text-[16px] leading-8">${inline(line.replace(/^\s*[-*+]\s+/, ""))}</li>`);
       continue;
     }
 
@@ -146,10 +146,10 @@ export function renderMarkdown(source: string): string {
       flushParagraph();
       if (list !== "ol") {
         closeList();
-        out.push('<ol class="my-4 list-decimal space-y-1.5 pl-5 marker:text-stone">');
+        out.push('<ol class="my-5 list-decimal space-y-2 pl-5 marker:text-ghost">');
         list = "ol";
       }
-      out.push(`<li class="leading-7">${inline(line.replace(/^\s*\d+[.)]\s+/, ""))}</li>`);
+      out.push(`<li class="text-[16px] leading-8">${inline(line.replace(/^\s*\d+[.)]\s+/, ""))}</li>`);
       continue;
     }
 
@@ -157,7 +157,7 @@ export function renderMarkdown(source: string): string {
       flushParagraph();
       closeList();
       out.push(
-        `<blockquote class="my-4 border-l-2 border-hairline-strong pl-4 text-mute">${inline(line.replace(/^\s*>\s?/, ""))}</blockquote>`,
+        `<blockquote class="my-6 border-l-2 border-brand-line pl-5 text-[16px] leading-8 text-muted">${inline(line.replace(/^\s*>\s?/, ""))}</blockquote>`,
       );
       continue;
     }
@@ -165,7 +165,7 @@ export function renderMarkdown(source: string): string {
     if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
       flushParagraph();
       closeList();
-      out.push('<hr class="my-8 border-hairline" />');
+      out.push('<hr class="my-10 border-line" />');
       continue;
     }
 

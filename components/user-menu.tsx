@@ -35,34 +35,36 @@ export function UserMenu({ user }: { user: SessionUser }) {
     <div ref={root} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen((value) => !value)}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
         className={cx(
-          "grid h-8 w-8 place-items-center overflow-hidden rounded-full border transition-colors",
-          open ? "border-hairline-strong" : "border-hairline hover:border-hairline-strong",
+          "grid h-10 w-10 place-items-center overflow-hidden rounded-full border transition-colors",
+          open ? "border-brand" : "border-line-strong hover:border-ghost",
         )}
       >
         {user.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
         ) : (
-          <span className="bg-elevated text-[12px] font-medium text-charcoal">{initial}</span>
+          <span className="grid h-full w-full place-items-center bg-brand-soft text-[15px] font-medium text-brand-ink">
+            {initial}
+          </span>
         )}
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-10 w-56 overflow-hidden rounded-lg border border-hairline bg-elevated shadow-2xl shadow-black/60"
+          className="absolute top-12 right-0 w-60 overflow-hidden rounded-2xl border border-line bg-canvas shadow-pop"
         >
-          <div className="border-b border-hairline px-3.5 py-3">
-            <p className="truncate text-[13px] font-medium text-ink">{user.name}</p>
-            <p className="truncate text-[12px] text-ash">{user.email}</p>
+          <div className="border-b border-line px-4 py-3.5">
+            <p className="truncate text-[15px] font-medium text-ink">{user.name}</p>
+            <p className="truncate text-[13px] text-muted">{user.email}</p>
           </div>
 
-          <div className="p-1">
+          <div className="p-1.5">
             <MenuLink href="/dashboard" onNavigate={() => setOpen(false)}>
               Your apps
             </MenuLink>
@@ -79,11 +81,11 @@ export function UserMenu({ user }: { user: SessionUser }) {
             )}
           </div>
 
-          <form action="/api/sign-out" method="post" className="border-t border-hairline p-1">
+          <form action="/api/sign-out" method="post" className="border-t border-line p-1.5">
             <button
               type="submit"
               role="menuitem"
-              className="w-full rounded-md px-2.5 py-2 text-left text-[13px] text-mute transition-colors hover:bg-card hover:text-ink"
+              className="w-full rounded-lg px-3 py-2.5 text-left text-[15px] text-body transition-colors hover:bg-surface hover:text-ink"
             >
               Sign out
             </button>
@@ -108,7 +110,7 @@ function MenuLink({
       href={href}
       role="menuitem"
       onClick={onNavigate}
-      className="block rounded-md px-2.5 py-2 text-[13px] text-mute transition-colors hover:bg-card hover:text-ink"
+      className="block rounded-lg px-3 py-2.5 text-[15px] text-body transition-colors hover:bg-surface hover:text-ink"
     >
       {children}
     </Link>

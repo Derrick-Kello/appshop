@@ -33,8 +33,17 @@ the app's latest GitHub release at request time.
 
 ## Conventions
 
-- Design tokens in `app/globals.css` are shared with `../Crest/crest-web`. Keep
-  them in sync; the two sites are meant to read as one family. Dark only.
+- Design tokens in `app/globals.css` are lifted from the Prepskora site
+  (prepskora.smarthivelabs.com) so the Smart Hive Labs properties read as one
+  family: white canvas, `#f7f9fc` surfaces, `#e7eaf4` hairlines, one blue
+  (`#2863c9`) carrying every primary action. Light only.
+- Controls are pills; panels use the generous radii (`rounded-2xl` / `3xl`).
+  Elevation is diffuse (`shadow-raise` / `float` / `pop`), never a hard drop.
+- Body copy is 15–17px. The old 12–13px scale was too small to read; do not
+  reintroduce it.
+- Headlines use `.display` (weight 400, -0.035em tracking) or `.display-sm`.
+- Search lives in the sticky nav only. Do not add a second search box to a
+  page header — one search, always in the same place.
 - Server Actions return `{ error }` / `{ ok }` state rather than throwing, so
   forms can render the message.
 - Verification (`verified`) is decided server-side from the signed-in GitHub

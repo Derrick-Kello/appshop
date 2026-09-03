@@ -2,9 +2,9 @@ import { cx } from "./ui";
 
 /**
  * Appshop stores no files, so most listings arrive without an icon. Rather than
- * a grey placeholder, a listing gets a stable generated mark: the same slug
- * always produces the same hue pair, so the shelf stays recognisable between
- * visits and an app that later adds a real icon simply replaces it.
+ * a grey placeholder, a listing gets a stable generated mark in the pastel
+ * register the Prepskora cards use: the same slug always produces the same
+ * gradient, so the shelf stays recognisable between visits.
  */
 function hueFrom(seed: string): number {
   let hash = 0;
@@ -15,10 +15,10 @@ function hueFrom(seed: string): number {
 }
 
 const SIZES = {
-  sm: "h-9 w-9 rounded-lg text-[13px]",
-  md: "h-14 w-14 rounded-xl text-lg",
-  lg: "h-20 w-20 rounded-[18px] text-2xl",
-  xl: "h-28 w-28 rounded-[24px] text-4xl",
+  sm: "h-10 w-10 rounded-[12px] text-[15px]",
+  md: "h-14 w-14 rounded-[16px] text-lg",
+  lg: "h-20 w-20 rounded-[22px] text-2xl",
+  xl: "h-24 w-24 rounded-[26px] text-3xl",
 } as const;
 
 export function AppIcon({
@@ -34,17 +34,20 @@ export function AppIcon({
   size?: keyof typeof SIZES;
   className?: string;
 }) {
-  const shell = cx(
-    "shrink-0 overflow-hidden border border-hairline-soft",
-    SIZES[size],
-    className,
-  );
+  const shell = cx("shrink-0 overflow-hidden", SIZES[size], className);
 
   if (src) {
     // Publisher-supplied URLs from arbitrary hosts, so this stays a plain img
     // rather than next/image — no remotePatterns allowlist to keep in sync.
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt="" aria-hidden className={cx(shell, "object-cover")} />;
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt=""
+        aria-hidden
+        className={cx(shell, "border border-line object-cover")}
+      />
+    );
   }
 
   const hue = hueFrom(slug || name);
@@ -52,9 +55,10 @@ export function AppIcon({
   return (
     <div
       aria-hidden
-      className={cx(shell, "flex items-center justify-center font-medium text-white/90")}
+      className={cx(shell, "flex items-center justify-center font-semibold")}
       style={{
-        background: `linear-gradient(145deg, hsl(${hue} 42% 34%), hsl(${(hue + 42) % 360} 38% 18%))`,
+        background: `linear-gradient(150deg, hsl(${hue} 82% 93%), hsl(${(hue + 40) % 360} 72% 86%))`,
+        color: `hsl(${hue} 48% 34%)`,
       }}
     >
       {name.slice(0, 1).toUpperCase()}

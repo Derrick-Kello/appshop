@@ -144,6 +144,13 @@ platform in Appwrite and to the GitHub OAuth app's callback.
 
 ## Design
 
-The token system in `app/globals.css` is shared with the Crest marketing site,
-so every Smart Hive Labs property reads as one family. Dark only — there is no
-light variant.
+The token system in `app/globals.css` is taken from the Prepskora site
+(prepskora.smarthivelabs.com) so the Smart Hive Labs properties read as one
+family: a white canvas, `#f7f9fc` surfaces, `#e7eaf4` hairlines, and one blue
+(`#2863c9`) carrying every primary action. Controls are pills, panels use
+generous radii, and elevation is diffuse rather than a hard drop shadow.
+Light only.
+
+Type is Figtree, the closest free match to the General Sans / TT Talent pairing
+on the reference site. Headlines use the `.display` class (weight 400, -0.035em
+tracking); body copy sits at 15–17px.
