@@ -10,6 +10,7 @@ import {
   fetchLatestRelease,
   fetchReadme,
   fetchRepo,
+  findRepoIcon,
   parseRepo,
 } from "@/lib/github";
 
@@ -35,9 +36,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const repo = await fetchRepo(parsed.owner, parsed.name);
-    const [release, readme] = await Promise.all([
+    const [release, readme, iconUrl] = await Promise.all([
       fetchLatestRelease(repo.owner, repo.name),
       fetchReadme(repo.owner, repo.name),
+      findRepoIcon(repo.owner, repo.name),
     ]);
 
     return NextResponse.json({
@@ -49,6 +51,7 @@ export async function GET(request: NextRequest) {
         tagline: repo.description,
         description: absolutiseReadme(readme, repo.owner, repo.name),
         category: guessCategory(repo.topics, repo.description),
+        iconUrl,
         homepage: repo.homepage,
         tags: repo.topics.slice(0, 6),
         verified: await canPublish(user.githubLogin, repo.owner, repo.name),

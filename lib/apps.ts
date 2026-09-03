@@ -242,24 +242,32 @@ export async function recordDownload(id: string): Promise<void> {
   }
 }
 
-/** Caches GitHub facts onto the row so listing pages don't have to re-fetch. */
+/**
+ * Caches GitHub facts onto the row so listing pages don't have to re-fetch.
+ * `iconUrl` is only written when one was discovered, so this can backfill an
+ * icon onto a listing published before discovery existed without ever clearing
+ * one the publisher set by hand.
+ */
 export async function syncReleaseFacts(
   id: string,
-  facts: { stars: number; latestVersion: string; releasedAt: string },
+  facts: {
+    stars: number;
+    latestVersion: string;
+    releasedAt: string;
+    iconUrl?: string;
+  },
 ): Promise<void> {
   if (!isAppwriteConfigured() || !appwriteConfig.apiKey) return;
   try {
     const { tables } = createAdminClient();
-    await tables.updateRow({
-      databaseId,
-      tableId: appsTableId,
-      rowId: id,
-      data: {
-        stars: facts.stars,
-        latestVersion: facts.latestVersion,
-        releasedAt: facts.releasedAt || null,
-      },
-    });
+    const data: Record<string, unknown> = {
+      stars: facts.stars,
+      latestVersion: facts.latestVersion,
+      releasedAt: facts.releasedAt || null,
+    };
+    if (facts.iconUrl) data.iconUrl = facts.iconUrl;
+
+    await tables.updateRow({ databaseId, tableId: appsTableId, rowId: id, data });
   } catch (error) {
     console.error("[appshop] release sync failed:", error);
   }

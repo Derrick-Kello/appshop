@@ -1,41 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getAppBySlug, recordDownload } from "@/lib/apps";
-import { fetchLatestRelease } from "@/lib/github";
-import type { Build } from "@/lib/types";
+import { fetchLatestRelease, pickBuild } from "@/lib/github";
 
 /**
  * The whole distribution layer. Appshop stores nothing, so a download is a
  * lookup of the app's current release followed by a redirect to the GitHub
  * asset. Resolving at request time is what lets a publisher's new tag go live
  * without touching the listing.
+ *
+ * Which build gets served is decided by `pickBuild`, the same function the
+ * download panel labels itself with, so the button can never serve something
+ * other than what the page promised.
  */
 export const dynamic = "force-dynamic";
-
-/**
- * Apple silicon has been the default Mac for years, so an ambiguous request
- * gets the arm64 build; `?arch=intel` is the escape hatch for older hardware.
- */
-function pickBuild(builds: Build[], requested: string | null): Build | undefined {
-  if (builds.length === 0) return undefined;
-
-  if (requested === "intel") {
-    return builds.find((b) => b.arch === "intel") ??
-      builds.find((b) => b.arch === "universal") ??
-      builds[0];
-  }
-  if (requested === "arm64" || requested === "apple-silicon") {
-    return builds.find((b) => b.arch === "apple-silicon") ??
-      builds.find((b) => b.arch === "universal") ??
-      builds[0];
-  }
-
-  return (
-    builds.find((b) => b.arch === "apple-silicon") ??
-    builds.find((b) => b.arch === "universal") ??
-    builds[0]
-  );
-}
 
 export async function GET(
   request: NextRequest,
@@ -58,7 +36,10 @@ export async function GET(
     );
   }
 
-  const build = pickBuild(release?.builds ?? [], request.nextUrl.searchParams.get("arch"));
+  const build = pickBuild(
+    release?.builds ?? [],
+    request.nextUrl.searchParams.get("arch"),
+  );
 
   // Nothing installable attached: send them to the release itself rather than
   // to a dead end.

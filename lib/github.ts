@@ -168,6 +168,57 @@ function toBuilds(assets: RawRelease["assets"]): Build[] {
     .sort((a, b) => rank[a.kind] - rank[b.kind] || b.size - a.size);
 }
 
+/**
+ * Chooses which build a download resolves to.
+ *
+ * Format wins over architecture: a universal .dmg is a better artifact than an
+ * arm64 .zip, because a disk image is what a Mac user expects to mount and a
+ * universal binary runs everywhere. Only once the best available format is
+ * settled does architecture break the tie. Getting this order backwards served
+ * zips to people the page had just promised a .dmg.
+ *
+ * Exported so `DownloadPanel` labels exactly what `/api/download` will serve.
+ */
+export function pickBuild(builds: Build[], requested?: string | null): Build | undefined {
+  if (builds.length === 0) return undefined;
+
+  // `toBuilds` already sorted by format rank, so the first entry names the best
+  // format present in this release.
+  const bestKind = builds[0].kind;
+  const sameFormat = builds.filter((build) => build.kind === bestKind);
+
+  const wanted: Build["arch"] | null =
+    requested === "intel"
+      ? "intel"
+      : requested === "arm64" || requested === "apple-silicon"
+        ? "apple-silicon"
+        : null;
+
+  // No explicit request: Apple silicon has been the default Mac for years.
+  const preference: Build["arch"][] =
+    wanted === "intel"
+      ? ["intel", "universal"]
+      : wanted === "apple-silicon"
+        ? ["apple-silicon", "universal"]
+        : ["apple-silicon", "universal"];
+
+  for (const arch of preference) {
+    const match = sameFormat.find((build) => build.arch === arch);
+    if (match) return match;
+  }
+
+  // An Intel-only request with no Intel or universal build in the best format:
+  // fall back across formats before giving up entirely.
+  if (wanted) {
+    for (const arch of preference) {
+      const match = builds.find((build) => build.arch === arch);
+      if (match) return match;
+    }
+  }
+
+  return sameFormat[0] ?? builds[0];
+}
+
 export async function fetchLatestRelease(
   owner: string,
   name: string,
@@ -229,6 +280,69 @@ export async function fetchReadme(owner: string, name: string): Promise<string> 
   } catch {
     return "";
   }
+}
+
+/**
+ * Finds an app icon inside the repository.
+ *
+ * Mac apps keep a real icon in the repo already — an `AppIcon.appiconset`, or a
+ * `docs/icon.png` used by the README — so a listing should never have to fall
+ * back to a generated monogram just because nobody pasted a URL. One recursive
+ * tree call covers any layout, and the result is cached for a day.
+ */
+const ICON_RULES: [RegExp, number][] = [
+  [/AppIcon\.appiconset\/[^/]*512x512@2x\.png$/i, 100],
+  [/AppIcon\.appiconset\/[^/]*1024[^/]*\.png$/i, 96],
+  [/AppIcon\.appiconset\/[^/]*512x512\.png$/i, 92],
+  [/AppIcon\.appiconset\/[^/]*256x256@2x\.png$/i, 88],
+  [/AppIcon\.appiconset\/.*\.png$/i, 70],
+  [/(^|\/)(app-?)?icon\.png$/i, 66],
+  [/(^|\/)logo\.png$/i, 60],
+  [/(^|\/)(docs|assets|resources|art|media|images|\.github)\/[^/]*(icon|logo)[^/]*\.png$/i, 54],
+  [/(icon|logo)[^/]*\.png$/i, 30],
+];
+
+/** Anything that is plainly a screenshot or a social card, not an app icon. */
+const ICON_REJECT =
+  /(screenshot|screen-?shot|banner|social|og-?image|preview|hero|cover|demo|feature)/i;
+
+type TreeNode = { path: string; type: string; size?: number };
+
+export async function findRepoIcon(owner: string, name: string): Promise<string> {
+  let tree: TreeNode[];
+  try {
+    const res = await gh<{ tree: TreeNode[] }>(
+      `/repos/${owner}/${name}/git/trees/HEAD?recursive=1`,
+      { revalidate: 86_400, tags: [`tree:${owner}/${name}`] },
+    );
+    tree = res.tree ?? [];
+  } catch {
+    // No icon is a fine outcome; the generated mark covers it.
+    return "";
+  }
+
+  let best: { path: string; score: number; size: number } | null = null;
+
+  for (const node of tree) {
+    if (node.type !== "blob") continue;
+    if (!/\.png$/i.test(node.path)) continue;
+    if (ICON_REJECT.test(node.path)) continue;
+
+    const rule = ICON_RULES.find(([pattern]) => pattern.test(node.path));
+    if (!rule) continue;
+
+    const score = rule[1];
+    const size = node.size ?? 0;
+    // Higher score wins; among equals, the larger file is the higher resolution.
+    if (!best || score > best.score || (score === best.score && size > best.size)) {
+      best = { path: node.path, score, size };
+    }
+  }
+
+  if (!best) return "";
+
+  const encoded = best.path.split("/").map(encodeURIComponent).join("/");
+  return `https://raw.githubusercontent.com/${owner}/${name}/HEAD/${encoded}`;
 }
 
 /**

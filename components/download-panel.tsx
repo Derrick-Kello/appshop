@@ -1,4 +1,5 @@
 import { archLabel, formatBytes, formatDate } from "@/lib/format";
+import { pickBuild } from "@/lib/github";
 import type { App, Release } from "@/lib/types";
 
 import { AnchorButton, Badge, Card, cx } from "./ui";
@@ -46,7 +47,10 @@ export function DownloadPanel({
     );
   }
 
-  const [primary, ...alternates] = release.builds;
+  // The same picker the redirect route uses, so this label always names the
+  // file the button actually hands over.
+  const primary = pickBuild(release.builds);
+  const alternates = release.builds.filter((build) => build.url !== primary?.url);
 
   return (
     <Card className="overflow-hidden">
@@ -70,6 +74,9 @@ export function DownloadPanel({
             <p className="mt-3 text-center text-[14px] text-muted">
               {archLabel(primary.arch)} · {primary.kind.toUpperCase()} ·{" "}
               {formatBytes(primary.size)}
+            </p>
+            <p className="mt-1 truncate text-center text-[13px] text-faint">
+              {primary.name}
             </p>
           </>
         ) : (

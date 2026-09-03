@@ -26,7 +26,15 @@ the app's latest GitHub release at request time.
 - `lib/appwrite/server.ts` holds the two clients. `createSessionClient()`
   returns null when there is no session cookie rather than throwing.
 - `app/api/download/[slug]/route.ts` is the whole distribution surface. It
-  resolves the current release, picks a build, and 302s to GitHub.
+  resolves the current release, picks a build, and 302s to GitHub. Build choice
+  lives in `pickBuild` (lib/github.ts) and is shared with `DownloadPanel`, so
+  the button can never serve a file other than the one the page named. Format
+  outranks architecture there: a universal .dmg beats an arm64 .zip. Do not
+  reorder that — it previously served zips to people promised a .dmg.
+- `findRepoIcon` walks the repo tree for an `AppIcon.appiconset` or a
+  `docs/icon.png`, so listings show the real app icon without anyone pasting a
+  URL. The app page backfills a discovered icon onto the row, and only when the
+  row has none, so a publisher's own icon is never overwritten.
 - `lib/markdown.ts` renders release notes and descriptions. It escapes first
   and supports a fixed subset — do not swap in a general-purpose renderer
   without adding sanitisation, the input is publisher-supplied.

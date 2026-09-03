@@ -10,7 +10,12 @@ import { Badge, Card } from "@/components/ui";
 import { getAppBySlug, listApps, syncReleaseFacts } from "@/lib/apps";
 import { categoryName, findCategory } from "@/lib/categories";
 import { formatCount, timeAgo } from "@/lib/format";
-import { fetchLatestRelease, fetchReleases, fetchRepo } from "@/lib/github";
+import {
+  fetchLatestRelease,
+  fetchReleases,
+  fetchRepo,
+  findRepoIcon,
+} from "@/lib/github";
 import { excerpt, renderMarkdown } from "@/lib/markdown";
 import type { App, Release, Repo } from "@/lib/types";
 
@@ -46,17 +51,21 @@ async function loadGitHub(app: App): Promise<{
   repo: Repo | null;
   latest: Release | null;
   history: Release[];
+  icon: string;
 }> {
   try {
-    const [repo, latest, history] = await Promise.all([
+    const [repo, latest, history, icon] = await Promise.all([
       fetchRepo(app.repoOwner, app.repoName),
       fetchLatestRelease(app.repoOwner, app.repoName),
       fetchReleases(app.repoOwner, app.repoName, 6),
+      // Only when the listing has none: a repo tree walk is not worth doing
+      // for an app whose publisher already supplied an icon.
+      app.iconUrl ? Promise.resolve("") : findRepoIcon(app.repoOwner, app.repoName),
     ]);
-    return { repo, latest, history };
+    return { repo, latest, history, icon };
   } catch (error) {
     console.error(`[appshop] GitHub fetch failed for ${app.slug}:`, error);
-    return { repo: null, latest: null, history: [] };
+    return { repo: null, latest: null, history: [], icon: "" };
   }
 }
 
@@ -65,15 +74,23 @@ export default async function AppPage(props: PageProps<"/apps/[slug]">) {
   const app = await getAppBySlug(slug);
   if (!app || app.status === "draft") notFound();
 
-  const { repo, latest, history } = await loadGitHub(app);
+  const { repo, latest, history, icon } = await loadGitHub(app);
+  const iconUrl = app.iconUrl || icon;
 
   // Keep the cached facts on the row fresh so listing pages stay accurate
   // without every card triggering its own GitHub call.
-  if (repo && (repo.stars !== app.stars || latest?.tag !== app.latestVersion)) {
+  const stale =
+    repo &&
+    (repo.stars !== app.stars ||
+      latest?.tag !== app.latestVersion ||
+      (icon !== "" && icon !== app.iconUrl));
+
+  if (stale && repo) {
     void syncReleaseFacts(app.id, {
       stars: repo.stars,
       latestVersion: latest?.tag ?? "",
       releasedAt: latest?.publishedAt ?? "",
+      iconUrl: icon,
     });
   }
 
@@ -105,7 +122,7 @@ export default async function AppPage(props: PageProps<"/apps/[slug]">) {
             <AppIcon
               name={app.name}
               slug={app.slug}
-              src={app.iconUrl}
+              src={iconUrl}
               size="xl"
               className="animate-rise"
             />

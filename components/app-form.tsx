@@ -35,6 +35,7 @@ type Imported = {
     category: string;
     homepage: string;
     tags: string[];
+    iconUrl: string;
     verified: boolean;
   };
 };
@@ -223,6 +224,7 @@ export function AppForm({
   const [category, setCategory] = useState(app?.category ?? "utilities");
   const [homepage, setHomepage] = useState(app?.homepage ?? "");
   const [tags, setTags] = useState(app?.tags.join(", ") ?? "");
+  const [iconUrl, setIconUrl] = useState(app?.iconUrl ?? "");
   const [slugEdited, setSlugEdited] = useState(Boolean(app));
 
   function applyImport(data: Imported) {
@@ -235,6 +237,7 @@ export function AppForm({
     setCategory(data.suggestion.category);
     setHomepage(data.suggestion.homepage);
     setTags(data.suggestion.tags.join(", "));
+    setIconUrl(data.suggestion.iconUrl);
   }
 
   const ready = mode === "edit" || Boolean(imported);
@@ -254,10 +257,11 @@ export function AppForm({
 
         <Card className="space-y-6 p-6">
           <div className="flex items-start gap-4">
-            <AppIcon name={name || "A"} slug={slug || "app"} size="md" />
+            <AppIcon name={name || "A"} slug={slug || "app"} src={iconUrl} size="md" />
             <p className="text-[14px] leading-6 text-muted">
-              Without an icon URL, Appshop generates a stable mark from the app&rsquo;s
-              address. Point the icon field at a PNG in your repo to replace it.
+              Appshop looks for an app icon in your repository — an
+              `AppIcon.appiconset` or a `docs/icon.png`. If it finds nothing, it
+              generates a stable mark from the app&rsquo;s address instead.
             </p>
           </div>
 
@@ -366,12 +370,17 @@ export function AppForm({
             </Field>
           </div>
 
-          <Field label="Icon URL" optional hint="A square PNG, 512px or larger.">
+          <Field
+            label="Icon URL"
+            optional
+            hint="Found in your repo automatically. Override it with a square PNG, 512px or larger."
+          >
             <Input
               name="iconUrl"
               type="url"
               maxLength={1024}
-              defaultValue={app?.iconUrl ?? ""}
+              value={iconUrl}
+              onChange={(event) => setIconUrl(event.target.value)}
               placeholder="https://raw.githubusercontent.com/owner/repo/HEAD/docs/icon.png"
             />
           </Field>
