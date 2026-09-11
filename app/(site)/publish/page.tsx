@@ -1,6 +1,9 @@
+import fs from "fs";
+import path from "path";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { AgentPromptCard } from "@/components/agent-prompt-card";
 import { AppleIcon, CheckIcon, GitHubIcon } from "@/components/icons";
 import { ButtonLink, Card } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
@@ -40,10 +43,18 @@ export default async function PublishPage() {
   const user = await getCurrentUser();
   if (user) {
     redirect("/dashboard");
+
+  const promptPath = path.join(process.cwd(), "public", "prompt.md");
+  let promptContent = "";
+  try {
+    promptContent = fs.readFileSync(promptPath, "utf-8");
+  } catch (err) {
+    console.error("[appshop] Failed to load prompt.md:", err);
   }
 
   return (
     <main className="w-full pt-24 pb-16 max-w-7xl mx-auto px-4 sm:px-6 min-h-[calc(100vh-140px)]">
+    <main className="w-full pt-20 sm:pt-24 pb-16 max-w-7xl mx-auto px-4 sm:px-6 min-h-[calc(100vh-140px)]">
       <div className="w-full bg-surface-container-lowest/90 rounded-[2rem] p-6 sm:p-10 lg:p-12 shadow-[0_24px_60px_-12px_rgba(15,23,42,0.08),0_0_1px_1px_rgba(0,0,0,0.03)] backdrop-blur-xl flex flex-col gap-10 border border-black/5">
         
         {/* Header Hero Area */}
@@ -67,6 +78,7 @@ export default async function PublishPage() {
             >
               <GitHubIcon className="h-4 w-4" />
               Connect Repository
+              <span>{user ? "Open Developer Studio" : "Connect Repository"}</span>
             </ButtonLink>
             <ButtonLink
               href="/sign-up"
@@ -76,12 +88,34 @@ export default async function PublishPage() {
             >
               Create Developer Account
             </ButtonLink>
+            {!user ? (
+              <ButtonLink
+                href="/sign-up"
+                variant="outline"
+                size="lg"
+                className="rounded-full text-xs font-bold"
+              >
+                Create Developer Account
+              </ButtonLink>
+            ) : (
+              <ButtonLink
+                href="/dashboard"
+                variant="outline"
+                size="lg"
+                className="rounded-full text-xs font-bold"
+              >
+                Go to Dashboard
+              </ButtonLink>
+            )}
           </div>
         </div>
 
         {/* Content Section */}
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="space-y-10 min-w-0">
+            {/* AI Agent Setup Prompt */}
+            {promptContent && <AgentPromptCard promptContent={promptContent} />}
+
             {/* Checklist */}
             <section className="bg-surface-container-low/40 rounded-2xl p-6 sm:p-8 border border-line/60">
               <h2 className="text-lg font-bold text-on-surface mb-4">What you need to connect</h2>
@@ -159,6 +193,29 @@ export default async function PublishPage() {
 
           {/* Sidebar */}
           <aside className="space-y-6">
+            <Card className="p-6 rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/5 via-surface-container-lowest to-surface-container-lowest shadow-sm space-y-3.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0 shadow-xs">
+                  <span className="material-symbols-outlined text-[20px]">smart_toy</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-on-surface">Agent Ready</h3>
+                  <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Setup Prompt</span>
+                </div>
+              </div>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                Building with Cursor, Claude, or Copilot? Grab <code className="font-mono text-primary font-bold text-[11px]">prompt.md</code> to let your AI setup your repo folders in seconds.
+              </p>
+              <a
+                href="/prompt.md"
+                download="appshop-prompt.md"
+                className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold transition-all border border-primary/20 active:scale-95 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[15px]">download</span>
+                <span>Download prompt.md</span>
+              </a>
+            </Card>
+
             <Card className="p-6 rounded-2xl border border-line bg-surface-container-lowest shadow-sm space-y-4">
               <div className="w-10 h-10 rounded-xl bg-primary-container/10 flex items-center justify-center text-primary">
                 <span className="material-symbols-outlined text-[24px]">terminal</span>
