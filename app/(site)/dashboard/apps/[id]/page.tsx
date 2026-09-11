@@ -18,6 +18,15 @@ export default async function EditAppPage(props: PageProps<"/dashboard/apps/[id]
 
   const app = await getAppById(id);
   if (!app || app.ownerId !== user.id) notFound();
+  const isOwner =
+    app &&
+    (app.ownerId === user.id ||
+      Boolean(
+        user.githubLogin &&
+          (app.ownerGithub?.toLowerCase() === user.githubLogin.toLowerCase() ||
+            app.repoOwner?.toLowerCase() === user.githubLogin.toLowerCase()),
+      ));
+  if (!app || !isOwner) notFound();
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-14 sm:py-20">

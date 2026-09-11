@@ -7,12 +7,15 @@ import {
   GitHubError,
   absolutiseReadme,
   canPublish,
+  cleanGitHubToken,
   fetchLatestRelease,
   fetchReadme,
   fetchRepo,
-  findRepoIcon,
+  findRepoMedia,
   parseRepo,
 } from "@/lib/github";
+
+export const dynamic = "force-dynamic";
 
 /**
  * Backs the "paste a repo URL" step of publishing: everything Appshop can work
@@ -26,6 +29,8 @@ export async function GET(request: NextRequest) {
   }
 
   const input = request.nextUrl.searchParams.get("repo") ?? "";
+  const rawToken = request.nextUrl.searchParams.get("token")?.trim();
+  const token = cleanGitHubToken(rawToken) || undefined;
   const parsed = parseRepo(input);
   if (!parsed) {
     return NextResponse.json(
@@ -35,11 +40,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const repo = await fetchRepo(parsed.owner, parsed.name);
-    const [release, readme, iconUrl] = await Promise.all([
-      fetchLatestRelease(repo.owner, repo.name),
-      fetchReadme(repo.owner, repo.name),
-      findRepoIcon(repo.owner, repo.name),
+    const repo = await fetchRepo(parsed.owner, parsed.name, token);
+    const [release, readme, media] = await Promise.all([
+      fetchLatestRelease(repo.owner, repo.name, token),
+      fetchReadme(repo.owner, repo.name, token),
+      findRepoMedia(repo.owner, repo.name, token),
     ]);
 
     return NextResponse.json({
@@ -51,18 +56,27 @@ export async function GET(request: NextRequest) {
         tagline: repo.description,
         description: absolutiseReadme(readme, repo.owner, repo.name),
         category: guessCategory(repo.topics, repo.description),
-        iconUrl,
+        iconUrl: media.iconUrl,
+        screenshots: media.screenshots,
         homepage: repo.homepage,
         tags: repo.topics.slice(0, 6),
-        verified: await canPublish(user.githubLogin, repo.owner, repo.name),
+        verified: await canPublish(user.githubLogin, repo.owner, repo.name, token),
       },
     });
   } catch (error) {
     if (error instanceof GitHubError) {
-      const message =
-        error.status === 404
-          ? "No public repository at that address."
+      let message = error.message;
+      if (error.status === 404) {
+        message = token
+          ? `Repository "${parsed.owner}/${parsed.name}" not found. Please verify the owner/repo name and ensure your Personal Access Token has the "repo" scope.`
+          : `No public repository at "${parsed.owner}/${parsed.name}". If this is a private repository, please check "This is a private repository" and enter your GitHub Personal Access Token.`;
+      } else if (error.status === 401) {
+        message = "GitHub authentication failed: Your Personal Access Token appears to be invalid or expired.";
+      } else if (error.status === 403) {
+        message = token
+          ? "GitHub access forbidden: Your token may lack the required permissions (needs 'repo' scope) or organization SSO authorization."
           : error.message;
+      }
       return NextResponse.json({ error: message }, { status: error.status });
     }
 
@@ -70,3 +84,4 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Could not reach GitHub. Try again." }, { status: 502 });
   }
 }
+

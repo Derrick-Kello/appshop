@@ -17,14 +17,24 @@ class GitHubError extends Error {
   }
 }
 
-function headers(): HeadersInit {
+export function cleanGitHubToken(raw?: string): string {
+  if (!raw) return "";
+  return raw
+    .trim()
+    .replace(/^["']|["']$/g, "")
+    .replace(/^(Bearer|token)\s+/i, "")
+    .trim();
+}
+
+function headers(token?: string): HeadersInit {
   const h: Record<string, string> = {
     Accept: "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28",
     "User-Agent": "appshop",
   };
-  if (process.env.GITHUB_TOKEN) {
-    h.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+  const auth = cleanGitHubToken(token) || cleanGitHubToken(process.env.GITHUB_TOKEN);
+  if (auth) {
+    h.Authorization = `Bearer ${auth}`;
   }
   return h;
 }
@@ -36,12 +46,27 @@ function headers(): HeadersInit {
  */
 async function gh<T>(
   path: string,
-  { revalidate = 600, tags = [] as string[] } = {},
+  {
+    token,
+    revalidate = 600,
+    tags = [] as string[],
+  }: { token?: string; revalidate?: number; tags?: string[] } = {},
 ): Promise<T> {
-  const res = await fetch(`${API}${path}`, {
-    headers: headers(),
-    next: { revalidate, tags },
-  });
+  const isAuth = Boolean(cleanGitHubToken(token));
+  const fetchOptions: RequestInit = {
+    headers: headers(token),
+  };
+
+  if (isAuth) {
+    // Authenticated calls with user tokens must bypass the Next.js Data Cache.
+    // Next.js keys cache by URL, which would cause an unauthenticated 404
+    // to forever shadow a valid user token.
+    fetchOptions.cache = "no-store";
+  } else {
+    fetchOptions.next = { revalidate, tags };
+  }
+
+  const res = await fetch(`${API}${path}`, fetchOptions);
 
   if (!res.ok) {
     const detail =
@@ -53,6 +78,7 @@ async function gh<T>(
 
   return (await res.json()) as T;
 }
+
 
 /** Accepts a full URL, `owner/repo`, or a git remote, and normalises it. */
 export function parseRepo(input: string): { owner: string; name: string } | null {
@@ -87,13 +113,17 @@ type RawRepo = {
   owner: { login: string; avatar_url: string; type: string };
 };
 
-export async function fetchRepo(owner: string, name: string): Promise<Repo> {
+export async function fetchRepo(owner: string, name: string, token?: string): Promise<Repo> {
   const raw = await gh<RawRepo>(`/repos/${owner}/${name}`, {
+    token,
     tags: [`repo:${owner}/${name}`],
   });
 
-  if (raw.private) {
-    throw new GitHubError("That repository is private. Appshop can only list public repos.", 404);
+  if (raw.private && !token && !process.env.GITHUB_TOKEN) {
+    throw new GitHubError(
+      "That repository is private. Provide a GitHub Access Token to connect it.",
+      403,
+    );
   }
 
   return {
@@ -122,10 +152,12 @@ type RawRelease = {
   prerelease: boolean;
   draft: boolean;
   assets: {
+    id: number;
     name: string;
     size: number;
     download_count: number;
     browser_download_url: string;
+    url: string;
   }[];
 };
 
@@ -162,6 +194,7 @@ function toBuilds(assets: RawRelease["assets"]): Build[] {
       url: a.browser_download_url,
       size: a.size,
       downloadCount: a.download_count,
+      assetId: a.id,
       ...classify(a.name),
     }))
     .filter((b) => b.kind !== "other" && !/\.(sha256|txt|asc|sig|json)$/i.test(b.name))
@@ -222,10 +255,12 @@ export function pickBuild(builds: Build[], requested?: string | null): Build | u
 export async function fetchLatestRelease(
   owner: string,
   name: string,
+  token?: string,
 ): Promise<Release | null> {
   let raw: RawRelease;
   try {
     raw = await gh<RawRelease>(`/repos/${owner}/${name}/releases/latest`, {
+      token,
       tags: [`releases:${owner}/${name}`],
     });
   } catch (error) {
@@ -249,10 +284,11 @@ export async function fetchReleases(
   owner: string,
   name: string,
   limit = 10,
+  token?: string,
 ): Promise<Release[]> {
   const raw = await gh<RawRelease[]>(
     `/repos/${owner}/${name}/releases?per_page=${limit}`,
-    { tags: [`releases:${owner}/${name}`] },
+    { token, tags: [`releases:${owner}/${name}`] },
   );
 
   return raw
@@ -269,16 +305,61 @@ export async function fetchReleases(
 }
 
 /** The README, used to prefill a long description at import time. */
-export async function fetchReadme(owner: string, name: string): Promise<string> {
+export async function fetchReadme(
+  owner: string,
+  name: string,
+  token?: string,
+): Promise<string> {
   try {
     const raw = await gh<{ content: string; encoding: string }>(
       `/repos/${owner}/${name}/readme`,
-      { tags: [`repo:${owner}/${name}`] },
+      { token, tags: [`repo:${owner}/${name}`] },
     );
     if (raw.encoding !== "base64") return "";
     return Buffer.from(raw.content, "base64").toString("utf8");
   } catch {
     return "";
+  }
+}
+
+/**
+ * Resolves a signed binary download URL from GitHub for a private release asset.
+ * GitHub returns a 302 Found redirect to a temporary Amazon S3 signed URL.
+ * The visitor can download the binary directly without any GitHub account or repo access.
+ */
+export async function getPrivateAssetDownloadUrl(
+  owner: string,
+  name: string,
+  assetId: number,
+  token?: string,
+): Promise<string | null> {
+  const auth = token || process.env.GITHUB_TOKEN;
+  if (!auth) return null;
+
+  try {
+    const res = await fetch(`${API}/repos/${owner}/${name}/releases/assets/${assetId}`, {
+      headers: {
+        Accept: "application/octet-stream",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "appshop",
+        Authorization: `Bearer ${auth}`,
+      },
+      redirect: "manual",
+    });
+
+    if (res.status === 302 || res.status === 301) {
+      const location = res.headers.get("location");
+      if (location) return location;
+    }
+
+    if (res.ok) {
+      return res.url;
+    }
+
+    return null;
+  } catch (err) {
+    console.error(`[appshop] Failed to get private asset URL:`, err);
+    return null;
   }
 }
 
@@ -308,41 +389,122 @@ const ICON_REJECT =
 
 type TreeNode = { path: string; type: string; size?: number };
 
-export async function findRepoIcon(owner: string, name: string): Promise<string> {
+export type RepoMedia = {
+  iconUrl: string;
+  bannerUrl: string;
+  screenshots: string[];
+};
+
+const BANNER_RULES: [RegExp, number][] = [
+  // Top priority: explicitly named banner or cover in dedicated art/media/assets/docs folders
+  [/(^|\/)(art|assets|media|docs|\.github|images)\/[^/]*(banner|cover|hero|header|showcase)[^/]*\.(png|jpe?g|webp)$/i, 100],
+  // In root directory: banner, cover, hero, showcase
+  [/^(banner|cover|hero|header|showcase)\.(png|jpe?g|webp)$/i, 90],
+  // Social card / OpenGraph / preview images
+  [/(^|\/)(art|assets|media|docs|\.github|images)\/[^/]*(og-?image|social|preview|feature)[^/]*\.(png|jpe?g|webp)$/i, 80],
+  [/^(og-?image|social|preview|feature)\.(png|jpe?g|webp)$/i, 70],
+  // Any banner filename anywhere in the repo
+  [/[^/]*(banner|cover|hero)[^/]*\.(png|jpe?g|webp)$/i, 50],
+];
+
+const SCREENSHOT_DIR =
+  /(^|\/)(screenshots|docs\/screenshots|assets\/screenshots|media\/screenshots|\.github\/screenshots|art\/screenshots)\//i;
+const SCREENSHOT_FILE = /(screenshot|screen-?shot|preview|demo|window)/i;
+
+function toRawUrl(owner: string, name: string, filePath: string): string {
+  const encoded = filePath.split("/").map(encodeURIComponent).join("/");
+  return `https://raw.githubusercontent.com/${owner}/${name}/HEAD/${encoded}`;
+}
+
+export async function findRepoMedia(
+  owner: string,
+  name: string,
+  token?: string,
+): Promise<RepoMedia> {
   let tree: TreeNode[];
   try {
     const res = await gh<{ tree: TreeNode[] }>(
       `/repos/${owner}/${name}/git/trees/HEAD?recursive=1`,
-      { revalidate: 86_400, tags: [`tree:${owner}/${name}`] },
+      { token, revalidate: 86_400, tags: [`tree:${owner}/${name}`] },
     );
     tree = res.tree ?? [];
   } catch {
-    // No icon is a fine outcome; the generated mark covers it.
-    return "";
+    return { iconUrl: "", bannerUrl: "", screenshots: [] };
   }
 
-  let best: { path: string; score: number; size: number } | null = null;
+  let bestIcon: { path: string; score: number; size: number } | null = null;
+  let bestBanner: { path: string; score: number; size: number } | null = null;
+  const screenshotCandidates: { path: string; size: number }[] = [];
 
   for (const node of tree) {
     if (node.type !== "blob") continue;
-    if (!/\.png$/i.test(node.path)) continue;
-    if (ICON_REJECT.test(node.path)) continue;
-
-    const rule = ICON_RULES.find(([pattern]) => pattern.test(node.path));
-    if (!rule) continue;
-
-    const score = rule[1];
     const size = node.size ?? 0;
-    // Higher score wins; among equals, the larger file is the higher resolution.
-    if (!best || score > best.score || (score === best.score && size > best.size)) {
-      best = { path: node.path, score, size };
+    const p = node.path;
+
+    // 1. Icon discovery
+    if (/\.png$/i.test(p) && !ICON_REJECT.test(p)) {
+      const rule = ICON_RULES.find(([pattern]) => pattern.test(p));
+      if (rule) {
+        const score = rule[1];
+        if (!bestIcon || score > bestIcon.score || (score === bestIcon.score && size > bestIcon.size)) {
+          bestIcon = { path: p, score, size };
+        }
+      }
+    }
+
+    // 2. Banner discovery
+    if (/\.(png|jpe?g|webp)$/i.test(p)) {
+      const bRule = BANNER_RULES.find(([pattern]) => pattern.test(p));
+      if (bRule) {
+        const score = bRule[1];
+        if (!bestBanner || score > bestBanner.score || (score === bestBanner.score && size > bestBanner.size)) {
+          bestBanner = { path: p, score, size };
+        }
+      }
+    }
+
+    // 3. Screenshot gallery discovery
+    if (/\.(png|jpe?g|webp)$/i.test(p)) {
+      if (SCREENSHOT_DIR.test(p) || SCREENSHOT_FILE.test(p)) {
+        screenshotCandidates.push({ path: p, size });
+      }
     }
   }
 
-  if (!best) return "";
+  const iconUrl = bestIcon ? toRawUrl(owner, name, bestIcon.path) : "";
+  const bannerUrl = bestBanner ? toRawUrl(owner, name, bestBanner.path) : "";
 
-  const encoded = best.path.split("/").map(encodeURIComponent).join("/");
-  return `https://raw.githubusercontent.com/${owner}/${name}/HEAD/${encoded}`;
+  const chosenBannerPath = bestBanner?.path;
+  const chosenIconPath = bestIcon?.path;
+
+  const validScreenshots = screenshotCandidates
+    .filter((s) => s.path !== chosenBannerPath && s.path !== chosenIconPath)
+    .sort((a, b) => a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: "base" }))
+    .map((s) => toRawUrl(owner, name, s.path));
+
+  const finalScreenshots: string[] = [];
+  if (bannerUrl) {
+    finalScreenshots.push(bannerUrl);
+  }
+  for (const s of validScreenshots) {
+    if (finalScreenshots.length >= 6) break;
+    finalScreenshots.push(s);
+  }
+
+  return {
+    iconUrl,
+    bannerUrl: bannerUrl || (finalScreenshots[0] ?? ""),
+    screenshots: finalScreenshots,
+  };
+}
+
+export async function findRepoIcon(
+  owner: string,
+  name: string,
+  token?: string,
+): Promise<string> {
+  const media = await findRepoMedia(owner, name, token);
+  return media.iconUrl;
 }
 
 /**
@@ -353,15 +515,17 @@ export async function canPublish(
   login: string,
   owner: string,
   name: string,
+  token?: string,
 ): Promise<boolean> {
   if (!login) return false;
   if (login.toLowerCase() === owner.toLowerCase()) return true;
-  if (!process.env.GITHUB_TOKEN) return false;
+  const auth = cleanGitHubToken(token) || cleanGitHubToken(process.env.GITHUB_TOKEN);
+  if (!auth) return false;
 
   try {
     const perm = await gh<{ permission: string }>(
       `/repos/${owner}/${name}/collaborators/${login}/permission`,
-      { revalidate: 300 },
+      { token: auth, revalidate: 300 },
     );
     return perm.permission === "admin" || perm.permission === "write";
   } catch {

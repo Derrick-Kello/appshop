@@ -15,7 +15,14 @@ import { isAppwriteConfigured } from "@/lib/appwrite/config";
 import { getCurrentUser } from "@/lib/auth";
 import { CATEGORY_SLUGS } from "@/lib/categories";
 import { slugify } from "@/lib/format";
-import { canPublish, fetchLatestRelease, fetchRepo, parseRepo } from "@/lib/github";
+import {
+  canPublish,
+  cleanGitHubToken,
+  fetchLatestRelease,
+  fetchRepo,
+  findRepoMedia,
+  parseRepo,
+} from "@/lib/github";
 import type { AppStatus } from "@/lib/types";
 
 export type FormState = { error?: string; ok?: string } | undefined;
@@ -27,10 +34,23 @@ const LIMITS = {
   homepage: 512,
   requirements: 200,
   iconUrl: 1024,
+  pwaUrl: 1024,
+  appStoreUrl: 1024,
+  playStoreUrl: 1024,
+  githubToken: 256,
+  binaryUrl: 1024,
 };
 
 function text(form: FormData, key: string, limit: number): string {
   return String(form.get(key) ?? "").trim().slice(0, limit);
+}
+
+function cleanUrl(val: string): string {
+  const trimmed = val.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/i.test(trimmed)) return `https://${trimmed}`;
+  return "";
 }
 
 /** One URL per line in the textarea; anything that isn't http(s) is dropped. */
@@ -73,14 +93,33 @@ async function readForm(form: FormData): Promise<
   const slug = slugify(text(form, "slug", 64) || name);
   if (!slug) return { error: "That name doesn't produce a usable web address. Set a slug." };
 
+  const platform = text(form, "platform", 32) || "macos";
+  const rawPriv = form.get("isPrivate");
+  const rawToken = text(form, "githubToken", LIMITS.githubToken);
+  const githubToken = cleanGitHubToken(rawToken);
+  const isPrivate = rawPriv === "true" || rawPriv === "on" || rawPriv === "1" || Boolean(githubToken);
+  const binaryUrl = cleanUrl(text(form, "binaryUrl", LIMITS.binaryUrl));
+  const pwaUrl = cleanUrl(text(form, "pwaUrl", LIMITS.pwaUrl));
+  const appStoreUrl = cleanUrl(text(form, "appStoreUrl", LIMITS.appStoreUrl));
+  const playStoreUrl = cleanUrl(text(form, "playStoreUrl", LIMITS.playStoreUrl));
+
   let repo;
   try {
-    repo = await fetchRepo(parsed.owner, parsed.name);
-  } catch {
-    return { error: "That repository isn't public, or GitHub couldn't be reached." };
+    repo = await fetchRepo(parsed.owner, parsed.name, githubToken || undefined);
+  } catch (err) {
+    return {
+      error:
+        err instanceof Error
+          ? err.message
+          : "That repository couldn't be reached or is private without a valid access token.",
+    };
   }
 
-  const release = await fetchLatestRelease(repo.owner, repo.name).catch(() => null);
+  const release = await fetchLatestRelease(
+    repo.owner,
+    repo.name,
+    githubToken || undefined,
+  ).catch(() => null);
 
   const status = String(form.get("status") ?? "published");
   const validStatus: AppStatus =
@@ -93,10 +132,16 @@ async function readForm(form: FormData): Promise<
       tagline,
       description: text(form, "description", LIMITS.description),
       category,
-      platform: "macos",
+      platform,
+      isPrivate,
+      githubToken: githubToken || undefined,
+      binaryUrl: binaryUrl || undefined,
+      pwaUrl,
+      appStoreUrl,
+      playStoreUrl,
       repoOwner: repo.owner,
       repoName: repo.name,
-      homepage: text(form, "homepage", LIMITS.homepage),
+      homepage: cleanUrl(text(form, "homepage", LIMITS.homepage)),
       iconUrl: text(form, "iconUrl", LIMITS.iconUrl),
       screenshots: urlList(form, "screenshots"),
       ownerGithub: repo.ownerLogin,
@@ -128,10 +173,29 @@ export async function publishApp(_state: FormState, form: FormData): Promise<For
     return { error: `The address /apps/${result.input.slug} is taken. Pick another slug.` };
   }
 
+  let screenshots = result.input.screenshots;
+  let iconUrl = result.input.iconUrl;
+
+  if (screenshots.length === 0 || !iconUrl) {
+    try {
+      const media = await findRepoMedia(result.input.repoOwner, result.input.repoName);
+      if (screenshots.length === 0 && media.screenshots.length > 0) {
+        screenshots = media.screenshots;
+      }
+      if (!iconUrl && media.iconUrl) {
+        iconUrl = media.iconUrl;
+      }
+    } catch {
+      // Best-effort asset lookup
+    }
+  }
+
   let slug: string;
   try {
     const app = await createApp({
       ...result.input,
+      iconUrl,
+      screenshots,
       ownerId: user.id,
       ownerName: user.name,
       ownerAvatar: user.avatarUrl,
@@ -141,6 +205,7 @@ export async function publishApp(_state: FormState, form: FormData): Promise<For
         user.githubLogin,
         result.input.repoOwner,
         result.input.repoName,
+        result.input.githubToken,
       ),
     });
     slug = app.slug;
@@ -162,7 +227,15 @@ export async function saveApp(_state: FormState, form: FormData): Promise<FormSt
   const id = String(form.get("id") ?? "");
   const existing = await getAppById(id);
   if (!existing) return { error: "That listing no longer exists." };
-  if (existing.ownerId !== user.id) return { error: "That listing belongs to someone else." };
+
+  const isOwner =
+    existing.ownerId === user.id ||
+    Boolean(
+      user.githubLogin &&
+        (existing.ownerGithub?.toLowerCase() === user.githubLogin.toLowerCase() ||
+          existing.repoOwner?.toLowerCase() === user.githubLogin.toLowerCase()),
+    );
+  if (!isOwner) return { error: "That listing belongs to someone else." };
 
   const result = await readForm(form);
   if ("error" in result) return { error: result.error };
@@ -175,6 +248,7 @@ export async function saveApp(_state: FormState, form: FormData): Promise<FormSt
     await updateApp(id, {
       ...result.input,
       // Preserved rather than reset: these are not the form's to change.
+      githubToken: result.input.githubToken || existing.githubToken,
       downloads: existing.downloads,
       featured: existing.featured,
       ownerId: existing.ownerId,
@@ -184,6 +258,7 @@ export async function saveApp(_state: FormState, form: FormData): Promise<FormSt
         user.githubLogin,
         result.input.repoOwner,
         result.input.repoName,
+        result.input.githubToken || existing.githubToken,
       ),
     });
   } catch (error) {
@@ -205,7 +280,16 @@ export async function removeApp(form: FormData): Promise<void> {
 
   const id = String(form.get("id") ?? "");
   const existing = await getAppById(id);
-  if (!existing || existing.ownerId !== user.id) redirect("/dashboard");
+  if (!existing) redirect("/dashboard");
+
+  const isOwner =
+    existing.ownerId === user.id ||
+    Boolean(
+      user.githubLogin &&
+        (existing.ownerGithub?.toLowerCase() === user.githubLogin.toLowerCase() ||
+          existing.repoOwner?.toLowerCase() === user.githubLogin.toLowerCase()),
+    );
+  if (!isOwner) redirect("/dashboard");
 
   await deleteApp(id);
 

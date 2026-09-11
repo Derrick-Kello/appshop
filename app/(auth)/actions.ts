@@ -1,20 +1,20 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { AppwriteException, ID, OAuthProvider } from "node-appwrite";
 
-import { isAppwriteConfigured } from "@/lib/appwrite/config";
-import {
-  clearSessionCookie,
-  createAdminClient,
-  createSessionClient,
-  setSessionCookie,
-} from "@/lib/appwrite/server";
+function isRedirect(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  return "digest" in error && String((error as { digest: string }).digest).startsWith("NEXT_REDIRECT");
+}
+
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createClient } from "@/lib/supabase/server";
 
 export type AuthState = { error?: string } | undefined;
 
 const NOT_CONFIGURED =
-  "Accounts are not switched on yet. Add your Appwrite project to .env.local and run `npm run setup:appwrite`.";
+  "Supabase Auth is not configured yet. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local.";
 
 /** Only site-relative paths survive, so `?next=` can't become an open redirect. */
 function safeNext(value: FormDataEntryValue | null): string {
@@ -22,27 +22,8 @@ function safeNext(value: FormDataEntryValue | null): string {
   return next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
 }
 
-function readable(error: unknown): string {
-  if (error instanceof AppwriteException) {
-    switch (error.type) {
-      case "user_invalid_credentials":
-        return "That email and password don't match an account.";
-      case "user_already_exists":
-      case "user_email_already_exists":
-        return "An account already uses that email. Try signing in.";
-      case "password_personal_data":
-        return "Pick a password that isn't part of your email or name.";
-      case "general_rate_limit_exceeded":
-        return "Too many attempts. Wait a minute and try again.";
-      default:
-        return error.message;
-    }
-  }
-  return error instanceof Error ? error.message : "Something went wrong. Try again.";
-}
-
 export async function signIn(_state: AuthState, formData: FormData): Promise<AuthState> {
-  if (!isAppwriteConfigured()) return { error: NOT_CONFIGURED };
+  if (!isSupabaseConfigured()) return { error: NOT_CONFIGURED };
 
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
@@ -51,18 +32,22 @@ export async function signIn(_state: AuthState, formData: FormData): Promise<Aut
   if (!email || !password) return { error: "Enter your email and password." };
 
   try {
-    const { account } = createAdminClient();
-    const session = await account.createEmailPasswordSession({ email, password });
-    await setSessionCookie(session.secret, session.expire);
+    const supabase = await createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      return { error: error.message };
+    }
   } catch (error) {
-    return { error: readable(error) };
+    if (isRedirect(error)) throw error;
+    return { error: error instanceof Error ? error.message : "Something went wrong. Try again." };
   }
 
   redirect(next);
 }
 
 export async function signUp(_state: AuthState, formData: FormData): Promise<AuthState> {
-  if (!isAppwriteConfigured()) return { error: NOT_CONFIGURED };
+  if (!isSupabaseConfigured()) return { error: NOT_CONFIGURED };
 
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
@@ -74,48 +59,82 @@ export async function signUp(_state: AuthState, formData: FormData): Promise<Aut
   if (password.length < 8) return { error: "Passwords need at least 8 characters." };
 
   try {
-    const { account } = createAdminClient();
-    await account.create({ userId: ID.unique(), email, password, name });
+    const supabase = await createClient();
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name,
+          name,
+        },
+      },
+    });
 
-    const session = await account.createEmailPasswordSession({ email, password });
-    await setSessionCookie(session.secret, session.expire);
+    if (error) {
+      return { error: error.message };
+    }
   } catch (error) {
-    return { error: readable(error) };
+    if (isRedirect(error)) throw error;
+    return { error: error instanceof Error ? error.message : "Something went wrong. Try again." };
   }
 
   redirect(next);
 }
 
 /**
- * The SSR OAuth flow: Appwrite hands back a redirect URL, GitHub sends the user
- * to /oauth with a one-time token, and that route trades the token for a session
- * cookie. The browser never holds an Appwrite secret.
+ * Initiates the Supabase GitHub OAuth flow. Supabase generates a redirect URL
+ * pointing to GitHub OAuth, and after authorization GitHub sends the user back
+ * to /auth/callback with an auth code.
  */
 export async function signInWithGitHub(formData: FormData): Promise<void> {
-  if (!isAppwriteConfigured()) redirect("/sign-in?error=not-configured");
+  if (!isSupabaseConfigured()) redirect("/sign-in?error=not-configured");
 
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const headerList = await headers();
+  const host = headerList.get("host");
+  const proto =
+    headerList.get("x-forwarded-proto") ??
+    (host?.startsWith("localhost") || host?.startsWith("127.0.0.1") ? "http" : "https");
+  const origin = host ? `${proto}://${host}` : (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000");
   const next = safeNext(formData.get("next"));
 
-  const { account } = createAdminClient();
-  const url = await account.createOAuth2Token({
-    provider: OAuthProvider.Github,
-    success: `${origin}/oauth?next=${encodeURIComponent(next)}`,
-    failure: `${origin}/sign-in?error=oauth`,
-    scopes: ["read:user", "user:email"],
-  });
+  let oauthUrl: string | null = null;
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: {
+        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        scopes: "read:user user:email",
+      },
+    });
 
-  redirect(url);
+    if (error || !data.url) {
+      console.error("[appshop] Supabase GitHub OAuth error:", error);
+      redirect(`/sign-in?error=oauth&next=${encodeURIComponent(next)}`);
+    }
+
+    oauthUrl = data.url;
+  } catch (error) {
+    if (isRedirect(error)) throw error;
+    console.error("[appshop] GitHub OAuth initialization failed:", error);
+    redirect(`/sign-in?error=oauth&next=${encodeURIComponent(next)}`);
+  }
+
+  if (oauthUrl) {
+    redirect(oauthUrl);
+  }
 }
 
 export async function signOut(): Promise<void> {
-  try {
-    const session = await createSessionClient();
-    await session?.account.deleteSession({ sessionId: "current" });
-  } catch {
-    // A session Appwrite has already dropped still needs its cookie cleared.
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createClient();
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("[appshop] Sign out failed:", err);
+    }
   }
 
-  await clearSessionCookie();
   redirect("/");
 }

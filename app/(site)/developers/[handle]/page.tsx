@@ -7,15 +7,15 @@ import { EmptyState } from "@/components/ui";
 import { listApps } from "@/lib/apps";
 import { formatCount } from "@/lib/format";
 
-export const revalidate = 600;
+export const revalidate = 300;
 
 export async function generateMetadata(
   props: PageProps<"/developers/[handle]">,
 ): Promise<Metadata> {
   const { handle } = await props.params;
   return {
-    title: handle,
-    description: `Mac apps published on Appshop by ${handle}.`,
+    title: `@${handle} · Developer Profile`,
+    description: `Apps on Appshop published by @${handle}.`,
   };
 }
 
@@ -23,8 +23,6 @@ export default async function DeveloperPage(props: PageProps<"/developers/[handl
   const { handle } = await props.params;
   if (!/^[A-Za-z0-9-]{1,39}$/.test(handle)) notFound();
 
-  // Publishers are identified by their GitHub login, so a profile is simply
-  // every published listing whose repo or account points at that handle.
   const all = await listApps({ limit: 200 });
   const apps = all.filter(
     (app) =>
@@ -36,43 +34,58 @@ export default async function DeveloperPage(props: PageProps<"/developers/[handl
   const downloads = apps.reduce((sum, app) => sum + app.downloads, 0);
 
   return (
-    <>
-      <div className="wash-soft -mt-19 rounded-b-3xl pt-19">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-6 px-5 pt-14 pb-12 sm:pt-20">
+    <main className="w-full pt-24 pb-16 max-w-7xl mx-auto px-4 sm:px-6 min-h-[calc(100vh-140px)]">
+      <div className="w-full bg-surface-container-lowest/90 rounded-[2rem] p-6 sm:p-10 shadow-[0_24px_60px_-12px_rgba(15,23,42,0.08),0_0_1px_1px_rgba(0,0,0,0.03)] backdrop-blur-xl flex flex-col gap-8 border border-black/5">
+        
+        {/* Profile Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-6 border-b border-line/60 pb-8">
           {profile?.ownerAvatar ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={profile.ownerAvatar}
               alt=""
-              className="h-20 w-20 rounded-full border border-line"
+              className="h-20 w-20 rounded-2xl border border-line object-cover shadow-sm"
             />
           ) : (
-            <span className="grid h-20 w-20 place-items-center rounded-full bg-brand-soft text-2xl font-semibold text-brand-ink">
+            <span className="grid h-20 w-20 place-items-center rounded-2xl bg-surface-container text-2xl font-bold text-primary shadow-sm">
               {handle.slice(0, 1).toUpperCase()}
             </span>
           )}
 
           <div>
-            <h1 className="display-sm text-[36px]">{profile?.ownerName || handle}</h1>
-            <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[15px] text-muted">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-primary tracking-wider uppercase">
+                Verified Developer
+              </span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-on-surface tracking-tight mt-1">
+              {profile?.ownerName || handle}
+            </h1>
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-muted">
               <a
                 href={`https://github.com/${handle}`}
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-2 transition-colors hover:text-ink"
+                className="flex items-center gap-1.5 text-on-surface hover:text-primary transition-colors"
               >
-                <GitHubIcon className="h-4 w-4" />@{handle}
+                <GitHubIcon className="h-3.5 w-3.5" />
+                @{handle}
               </a>
+              <span className="text-outline-variant">•</span>
               <span>
-                {apps.length} app{apps.length === 1 ? "" : "s"}
+                {apps.length} curated app{apps.length === 1 ? "" : "s"}
               </span>
-              {downloads > 0 && <span>{formatCount(downloads)} downloads</span>}
+              {downloads > 0 && (
+                <>
+                  <span className="text-outline-variant">•</span>
+                  <span>{formatCount(downloads)} downloads</span>
+                </>
+              )}
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="mx-auto max-w-6xl px-5 py-14">
+        {/* Apps Grid */}
         {apps.length > 0 ? (
           <AppGrid apps={apps} />
         ) : (
@@ -81,6 +94,6 @@ export default async function DeveloperPage(props: PageProps<"/developers/[handl
           </EmptyState>
         )}
       </div>
-    </>
+    </main>
   );
 }

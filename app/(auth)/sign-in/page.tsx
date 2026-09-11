@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 const NOTICES: Record<string, string> = {
   oauth: "GitHub sign-in didn't complete. Try again, or use an email and password.",
   "not-configured":
-    "Accounts are not switched on yet. Add your Appwrite project to .env.local first.",
+    "Supabase Auth is not switched on yet. Add your Supabase project keys to .env.local first.",
 };
 
 export default async function SignInPage(props: PageProps<"/sign-in">) {

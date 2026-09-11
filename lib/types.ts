@@ -7,6 +7,12 @@ export type App = {
   description: string;
   category: string;
   platform: string;
+  isPrivate?: boolean;
+  githubToken?: string;
+  binaryUrl?: string;
+  pwaUrl?: string;
+  appStoreUrl?: string;
+  playStoreUrl?: string;
   repoOwner: string;
   repoName: string;
   homepage: string;
@@ -59,6 +65,7 @@ export type Build = {
   downloadCount: number;
   arch: "apple-silicon" | "intel" | "universal";
   kind: "dmg" | "pkg" | "zip" | "other";
+  assetId?: number;
 };
 
 export type Release = {

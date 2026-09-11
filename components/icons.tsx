@@ -96,3 +96,49 @@ export function WarnIcon({ className = base }: IconProps) {
     </svg>
   );
 }
+
+export function GooglePlayIcon({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
+      <path d="M3.609 1.814L13.792 12 3.61 22.186a2.372 2.372 0 0 1-.61-1.638V3.452c0-.623.228-1.2.609-1.638zm11.24 11.24l2.457-2.457-11.97-6.84 9.513 9.297zm0 1.892l-9.513 9.298 11.97-6.841-2.457-2.457zm1.055-1.054l3.197 1.828c1.199.685 1.199 1.802 0 2.487l-3.197 1.827-2.73-2.73 2.73-3.412z" />
+    </svg>
+  );
+}
+
+export function PwaIcon({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className={className}>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  );
+}
+
+export function AndroidIcon({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
+      <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993.0001.5511-.4483.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 0 0-.1521-.5676.416.416 0 0 0-.5676.1521l-2.0223 3.503C15.5902 8.4126 13.8533 8.0818 12 8.0818s-3.5902.3308-5.1367.8682L4.841 5.447a.4161.4161 0 0 0-.5677-.1521.4157.4157 0 0 0-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396" />
+    </svg>
+  );
+}
+
+export function ExternalLinkIcon({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className={className}>
+      <path d="M12 8.5V12a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 12V5.5A1.5 1.5 0 0 1 4 4h3.5" />
+      <path d="M9.5 2.5H13.5V6.5" />
+      <path d="M6.5 9.5 13.5 2.5" />
+    </svg>
+  );
+}
+
+export function LockIcon({ className = base }: IconProps) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className={className}>
+      <rect x="3" y="6.5" width="10" height="7.5" rx="1.5" />
+      <path d="M5.5 6.5V4.5a2.5 2.5 0 0 1 5 0v2" />
+    </svg>
+  );
+}
+

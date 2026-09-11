@@ -75,6 +75,12 @@ const APP_COLUMNS = [
   { key: "description", type: "string", size: 20000, required: false },
   { key: "category", type: "string", size: 32, required: false },
   { key: "platform", type: "string", size: 32, required: false, xdefault: "macos" },
+  { key: "isPrivate", type: "boolean", required: false, xdefault: false },
+  { key: "githubToken", type: "string", size: 256, required: false },
+  { key: "binaryUrl", type: "string", size: 1024, required: false },
+  { key: "pwaUrl", type: "string", size: 1024, required: false },
+  { key: "appStoreUrl", type: "string", size: 1024, required: false },
+  { key: "playStoreUrl", type: "string", size: 1024, required: false },
   { key: "repoOwner", type: "string", size: 64, required: true },
   { key: "repoName", type: "string", size: 128, required: true },
   { key: "homepage", type: "string", size: 512, required: false },
@@ -128,7 +134,9 @@ let existed = 0;
 function isDuplicate(error) {
   return (
     error instanceof AppwriteException &&
-    (error.code === 409 || String(error.type).includes("already_exists"))
+    (error.code === 409 ||
+      String(error.type).includes("already_exists") ||
+      (error.code === 403 && String(error.message).toLowerCase().includes("maximum number of databases")))
   );
 }
 

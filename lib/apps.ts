@@ -3,7 +3,7 @@ import "server-only";
 import { ID, Permission, Query, Role, type Models } from "node-appwrite";
 
 import { appwriteConfig, isAppwriteConfigured } from "./appwrite/config";
-import { createAdminClient, createSessionClient } from "./appwrite/server";
+import { createAdminClient } from "./appwrite/server";
 import { SEED_APPS } from "./seed-apps";
 import type { App, AppStatus } from "./types";
 
@@ -25,6 +25,12 @@ function toApp(row: Models.DefaultRow): App {
     description: str("description"),
     category: str("category"),
     platform: str("platform") || "macos",
+    isPrivate: bool("isPrivate"),
+    githubToken: str("githubToken"),
+    binaryUrl: str("binaryUrl"),
+    pwaUrl: str("pwaUrl"),
+    appStoreUrl: str("appStoreUrl"),
+    playStoreUrl: str("playStoreUrl"),
     repoOwner: str("repoOwner"),
     repoName: str("repoName"),
     homepage: str("homepage"),
@@ -54,6 +60,8 @@ export type AppInput = Omit<App, "id" | "createdAt" | "updatedAt">;
 function toRow(input: Partial<AppInput>): Record<string, unknown> {
   const keys: (keyof AppInput)[] = [
     "slug", "name", "tagline", "description", "category", "platform",
+    "isPrivate", "githubToken", "binaryUrl",
+    "pwaUrl", "appStoreUrl", "playStoreUrl",
     "repoOwner", "repoName", "homepage", "iconUrl", "screenshots",
     "ownerId", "ownerName", "ownerAvatar", "ownerGithub", "status",
     "featured", "verified", "downloads", "stars", "latestVersion",
@@ -71,10 +79,12 @@ function toRow(input: Partial<AppInput>): Record<string, unknown> {
 
 export type ListOptions = {
   category?: string;
+  platform?: string;
   search?: string;
   sort?: "recent" | "popular" | "name";
   featured?: boolean;
   ownerId?: string;
+  ownerGithub?: string;
   status?: AppStatus | "any";
   limit?: number;
   offset?: number;
@@ -82,13 +92,43 @@ export type ListOptions = {
 
 /** Search and sort applied in memory, for the seed catalogue and as a fallback. */
 function filterLocally(apps: App[], options: ListOptions): App[] {
-  const { category, search, sort = "recent", featured, ownerId, status = "published" } = options;
+  const {
+    category,
+    platform,
+    search,
+    sort = "recent",
+    featured,
+    ownerId,
+    ownerGithub,
+    status = "published",
+  } = options;
   let out = [...apps];
 
   if (status !== "any") out = out.filter((a) => a.status === status);
   if (category) out = out.filter((a) => a.category === category);
   if (featured) out = out.filter((a) => a.featured);
-  if (ownerId) out = out.filter((a) => a.ownerId === ownerId);
+  if (ownerId || ownerGithub) {
+    out = out.filter((a) => {
+      if (ownerId && a.ownerId === ownerId) return true;
+      if (
+        ownerGithub &&
+        (a.ownerGithub?.toLowerCase() === ownerGithub.toLowerCase() ||
+          a.repoOwner?.toLowerCase() === ownerGithub.toLowerCase())
+      ) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  if (platform && platform !== "all") {
+    out = out.filter((a) => {
+      if (platform === "pwa") return a.platform === "pwa" || Boolean(a.pwaUrl);
+      if (platform === "macos") return a.platform === "macos" || (!a.platform && !a.pwaUrl);
+      if (platform === "mobile") return Boolean(a.appStoreUrl || a.playStoreUrl || a.platform === "ios" || a.platform === "android");
+      return a.platform === platform;
+    });
+  }
 
   if (search) {
     const q = search.toLowerCase();
@@ -114,8 +154,16 @@ export async function listApps(options: ListOptions = {}): Promise<App[]> {
   if (!isAppwriteConfigured()) return filterLocally(SEED_APPS, options);
 
   const {
-    category, search, sort = "recent", featured, ownerId,
-    status = "published", limit = 60, offset = 0,
+    category,
+    platform,
+    search,
+    sort = "recent",
+    featured,
+    ownerId,
+    ownerGithub,
+    status = "published",
+    limit = 60,
+    offset = 0,
   } = options;
 
   const queries: string[] = [Query.limit(limit), Query.offset(offset)];
@@ -123,6 +171,26 @@ export async function listApps(options: ListOptions = {}): Promise<App[]> {
   if (category) queries.push(Query.equal("category", category));
   if (featured) queries.push(Query.equal("featured", true));
   if (ownerId) queries.push(Query.equal("ownerId", ownerId));
+
+  if (ownerId && ownerGithub) {
+    queries.push(
+      Query.or([
+        Query.equal("ownerId", ownerId),
+        Query.equal("ownerGithub", ownerGithub),
+        Query.equal("repoOwner", ownerGithub),
+      ]),
+    );
+  } else if (ownerId) {
+    queries.push(Query.equal("ownerId", ownerId));
+  } else if (ownerGithub) {
+    queries.push(
+      Query.or([
+        Query.equal("ownerGithub", ownerGithub),
+        Query.equal("repoOwner", ownerGithub),
+      ]),
+    );
+  }
+
   if (search) queries.push(Query.search("name", search));
 
   queries.push(
@@ -136,7 +204,16 @@ export async function listApps(options: ListOptions = {}): Promise<App[]> {
   try {
     const { tables } = createAdminClient();
     const res = await tables.listRows({ databaseId, tableId: appsTableId, queries });
-    return res.rows.map(toApp);
+    let apps = res.rows.map(toApp);
+    if (platform && platform !== "all") {
+      apps = apps.filter((a) => {
+        if (platform === "pwa") return a.platform === "pwa" || Boolean(a.pwaUrl);
+        if (platform === "macos") return a.platform === "macos" || (!a.platform && !a.pwaUrl);
+        if (platform === "mobile") return Boolean(a.appStoreUrl || a.playStoreUrl || a.platform === "ios" || a.platform === "android");
+        return a.platform === platform;
+      });
+    }
+    return apps;
   } catch (error) {
     console.error("[appshop] listApps failed, serving seed catalogue:", error);
     return filterLocally(SEED_APPS, options);
@@ -179,22 +256,19 @@ export async function slugTaken(slug: string, exceptId?: string): Promise<boolea
 }
 
 /**
- * Writes go through the caller's own session, so Appwrite's row permissions —
- * not our code — decide whether the edit is allowed.
+ * Database writes execute with the admin client, with caller authorization
+ * and ownership checks enforced server-side in the dashboard server actions.
  */
 export async function createApp(input: AppInput): Promise<App> {
-  const session = await createSessionClient();
-  if (!session) throw new Error("Sign in to publish an app.");
+  const { tables } = createAdminClient();
 
-  const row = await session.tables.createRow({
+  const row = await tables.createRow({
     databaseId,
     tableId: appsTableId,
     rowId: ID.unique(),
     data: toRow(input),
     permissions: [
       Permission.read(Role.any()),
-      Permission.update(Role.user(input.ownerId)),
-      Permission.delete(Role.user(input.ownerId)),
     ],
   });
 
@@ -202,10 +276,9 @@ export async function createApp(input: AppInput): Promise<App> {
 }
 
 export async function updateApp(id: string, input: Partial<AppInput>): Promise<App> {
-  const session = await createSessionClient();
-  if (!session) throw new Error("Sign in to edit an app.");
+  const { tables } = createAdminClient();
 
-  const row = await session.tables.updateRow({
+  const row = await tables.updateRow({
     databaseId,
     tableId: appsTableId,
     rowId: id,
@@ -216,10 +289,9 @@ export async function updateApp(id: string, input: Partial<AppInput>): Promise<A
 }
 
 export async function deleteApp(id: string): Promise<void> {
-  const session = await createSessionClient();
-  if (!session) throw new Error("Sign in to delete an app.");
+  const { tables } = createAdminClient();
 
-  await session.tables.deleteRow({ databaseId, tableId: appsTableId, rowId: id });
+  await tables.deleteRow({ databaseId, tableId: appsTableId, rowId: id });
 }
 
 /**
@@ -255,6 +327,7 @@ export async function syncReleaseFacts(
     latestVersion: string;
     releasedAt: string;
     iconUrl?: string;
+    screenshots?: string[];
   },
 ): Promise<void> {
   if (!isAppwriteConfigured() || !appwriteConfig.apiKey) return;
@@ -266,6 +339,7 @@ export async function syncReleaseFacts(
       releasedAt: facts.releasedAt || null,
     };
     if (facts.iconUrl) data.iconUrl = facts.iconUrl;
+    if (facts.screenshots && facts.screenshots.length > 0) data.screenshots = facts.screenshots;
 
     await tables.updateRow({ databaseId, tableId: appsTableId, rowId: id, data });
   } catch (error) {

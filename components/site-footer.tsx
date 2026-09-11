@@ -26,38 +26,40 @@ const COLUMNS = [
   },
 ];
 
-/** Full-bleed navy, closing the page the way the reference site does. */
+/** Luminous frosted footer matching Stitch Design System. */
 export function SiteFooter() {
   return (
-    <footer className="mt-auto bg-ink text-faint">
-      <div className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
-        <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+    <footer className="mt-auto border-t border-line bg-surface-container-lowest/80 backdrop-blur-xl text-on-surface-variant">
+      <div className="mx-auto max-w-7xl px-5 py-14 sm:py-16">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div>
-            <Wordmark tone="light" />
-            <p className="mt-4 max-w-[24rem] text-[15px] leading-7 text-soft">
-              A storefront for Mac apps that ship from GitHub. Listings live
-              here, binaries stay in your releases.
+            <Wordmark tone="dark" />
+            <p className="mt-4 max-w-[22rem] text-[14px] leading-6 text-on-surface-variant">
+              Next-generation cross-platform app distribution portal. Point your GitHub repo once;
+              every tagged release turns into an instant verified download.
             </p>
-            <a
-              href="https://github.com/Derrick-Kello/appshop"
-              target="_blank"
-              rel="noreferrer"
-              className="mt-5 inline-flex items-center gap-2 text-[15px] text-faint transition-colors hover:text-white"
-            >
-              <GitHubIcon className="h-4 w-4" />
-              Source on GitHub
-            </a>
+            <div className="mt-4 flex items-center gap-3">
+              <a
+                href="https://github.com/Derrick-Kello/appshop"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-hover transition-colors"
+              >
+                <GitHubIcon className="h-4 w-4" />
+                GitHub Repository
+              </a>
+            </div>
           </div>
 
           {COLUMNS.map((column) => (
             <div key={column.title}>
-              <h2 className="text-[15px] font-semibold text-white">{column.title}</h2>
-              <ul className="mt-4 space-y-3">
+              <h2 className="text-[13px] font-bold tracking-wider uppercase text-on-surface">{column.title}</h2>
+              <ul className="mt-3.5 space-y-2.5">
                 {column.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-[15px] text-soft transition-colors hover:text-white"
+                      className="text-[14px] text-on-surface-variant hover:text-primary transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -68,13 +70,13 @@ export function SiteFooter() {
           ))}
 
           <div>
-            <h2 className="text-[15px] font-semibold text-white">Browse</h2>
-            <ul className="mt-4 space-y-3">
+            <h2 className="text-[13px] font-bold tracking-wider uppercase text-on-surface">Categories</h2>
+            <ul className="mt-3.5 space-y-2.5">
               {CATEGORIES.slice(0, 5).map((category) => (
                 <li key={category.slug}>
                   <Link
                     href={`/categories/${category.slug}`}
-                    className="text-[15px] text-soft transition-colors hover:text-white"
+                    className="text-[14px] text-on-surface-variant hover:text-primary transition-colors"
                   >
                     {category.name}
                   </Link>
@@ -84,9 +86,13 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col gap-3 border-t border-white/10 pt-8 text-[14px] text-soft sm:flex-row sm:items-center sm:justify-between">
-          <p>Smart Hive Labs · {new Date().getFullYear()}</p>
-          <p>Every download resolves to a GitHub release. Appshop hosts no binaries.</p>
+        <div className="mt-12 flex flex-col gap-3 border-t border-line/60 pt-6 text-[13px] text-muted sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-on-surface">Appshop</span>
+            <span className="text-outline-variant">•</span>
+            <span>Next-Gen App Distribution Ecosystem</span>
+          </div>
+          <p>Every download resolves to a signed release. No binaries in the middle.</p>
         </div>
       </div>
     </footer>

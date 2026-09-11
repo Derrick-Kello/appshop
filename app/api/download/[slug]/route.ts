@@ -1,17 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getAppBySlug, recordDownload } from "@/lib/apps";
-import { fetchLatestRelease, pickBuild } from "@/lib/github";
+import { fetchLatestRelease, getPrivateAssetDownloadUrl, pickBuild } from "@/lib/github";
 
 /**
  * The whole distribution layer. Appshop stores nothing, so a download is a
- * lookup of the app's current release followed by a redirect to the GitHub
- * asset. Resolving at request time is what lets a publisher's new tag go live
- * without touching the listing.
- *
- * Which build gets served is decided by `pickBuild`, the same function the
- * download panel labels itself with, so the button can never serve something
- * other than what the page promised.
+ * lookup of the app's current release followed by a redirect to the release
+ * asset. For proprietary/private apps, asset downloads are signed on demand
+ * without ever exposing the private repository or source code.
  */
 export const dynamic = "force-dynamic";
 
@@ -26,9 +22,19 @@ export async function GET(
     return NextResponse.json({ error: "No such app." }, { status: 404 });
   }
 
+  // Direct proprietary binary URL
+  if (app.binaryUrl) {
+    void recordDownload(app.id);
+    return NextResponse.redirect(app.binaryUrl);
+  }
+
   let release;
   try {
-    release = await fetchLatestRelease(app.repoOwner, app.repoName);
+    release = await fetchLatestRelease(
+      app.repoOwner,
+      app.repoName,
+      app.githubToken || undefined,
+    );
   } catch (error) {
     console.error(`[appshop] release lookup failed for ${slug}:`, error);
     return NextResponse.redirect(
@@ -36,14 +42,22 @@ export async function GET(
     );
   }
 
-  const build = pickBuild(
-    release?.builds ?? [],
-    request.nextUrl.searchParams.get("arch"),
-  );
+  const assetIdParam = request.nextUrl.searchParams.get("assetId");
+  const build = assetIdParam
+    ? release?.builds.find((b) => String(b.assetId) === assetIdParam)
+    : pickBuild(
+        release?.builds ?? [],
+        request.nextUrl.searchParams.get("arch"),
+      );
 
-  // Nothing installable attached: send them to the release itself rather than
-  // to a dead end.
+  // If no build found
   if (!build) {
+    // For private apps, NEVER expose the GitHub URL to the visitor
+    if (app.isPrivate) {
+      return NextResponse.redirect(
+        new URL(`/apps/${slug}?download=unavailable`, request.url),
+      );
+    }
     const fallback =
       release?.url ?? `https://github.com/${app.repoOwner}/${app.repoName}/releases`;
     return NextResponse.redirect(fallback);
@@ -51,6 +65,19 @@ export async function GET(
 
   // Counting must never delay or block the redirect.
   void recordDownload(app.id);
+
+  // For private apps, resolve the temporary signed S3 download URL from GitHub
+  if (app.isPrivate && build.assetId) {
+    const signedUrl = await getPrivateAssetDownloadUrl(
+      app.repoOwner,
+      app.repoName,
+      build.assetId,
+      app.githubToken || undefined,
+    );
+    if (signedUrl) {
+      return NextResponse.redirect(signedUrl);
+    }
+  }
 
   return NextResponse.redirect(build.url);
 }

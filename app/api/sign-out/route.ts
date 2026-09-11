@@ -1,14 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { SESSION_COOKIE } from "@/lib/appwrite/config";
-import { createSessionClient } from "@/lib/appwrite/server";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
-  try {
-    const session = await createSessionClient();
-    await session?.account.deleteSession({ sessionId: "current" });
-  } catch {
-    // A session Appwrite has already dropped still needs its cookie cleared.
+  if (isSupabaseConfigured()) {
+    try {
+      const supabase = await createClient();
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error("[appshop] Sign-out API error:", err);
+    }
   }
 
   const response = NextResponse.redirect(new URL("/", request.url), { status: 303 });

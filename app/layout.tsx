@@ -1,30 +1,21 @@
 import type { Metadata } from "next";
-import { Figtree } from "next/font/google";
 
 import "./globals.css";
-
-// Closest free match to the General Sans / TT Talent pairing on the Prepskora
-// site: geometric humanist, good at both display and UI sizes.
-const figtree = Figtree({
-  variable: "--font-figtree",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Appshop · Mac apps that ship from GitHub",
+    default: "Appshop · Modern Cross-Platform & Mac App Store",
     template: "%s · Appshop",
   },
   description:
-    "A storefront for Mac apps released straight from their GitHub repositories. Publish a repo, and every tagged release becomes a download. No uploads, no binaries in the middle.",
+    "A next-generation native app storefront and distribution portal. Discover curated native apps released straight from GitHub with instant, verified downloads.",
   openGraph: {
-    title: "Appshop · Mac apps that ship from GitHub",
+    title: "Appshop · Modern Cross-Platform & Mac App Store",
     description:
-      "Publish a repo, and every tagged release becomes a download. Listings live here, binaries stay in your GitHub releases.",
+      "A next-generation native app storefront and distribution portal. Discover curated native apps released straight from GitHub with instant, verified downloads.",
     type: "website",
     siteName: "Appshop",
     url: siteUrl,
@@ -34,8 +25,22 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${figtree.variable} h-full antialiased`}>
-      <body className="bg-canvas text-body flex min-h-full flex-col font-sans">
+    <html lang="en" className="h-full antialiased">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="bg-background text-on-surface flex min-h-full flex-col font-sans">
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-100 focus:rounded-full focus:bg-ink focus:px-4 focus:py-2.5 focus:text-sm focus:text-white"
